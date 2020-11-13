@@ -69,6 +69,7 @@ function flower() {
   if (petalCount<flowerCount/20) {
     stroke(flowerc);
     fill(flowerc);
+    rotate(radians(random(90));
     ellipse(x+random(-s/2, s/2), y+random(-s/2, s/2), random(s/2), random(s/2));
     petalCount++;
     
