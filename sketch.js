@@ -50,6 +50,7 @@ function grow() {
 }
 
 function locate() {
+  randomSeed(random(100));
   x = random(width);
   y = height;
 
