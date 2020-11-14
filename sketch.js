@@ -12,7 +12,8 @@ var petalCount;
 function setup() {
   canvas = createCanvas(window.innerWidth, window.innerHeight);
  //randomSeed(random(100));
-
+ellipseMode(CORNERS);
+fill(100);
   strokeWeight(2);
   colorMode(RGB, 255, 255, 255);
   stem = color(random(40), random(200), random(40));
