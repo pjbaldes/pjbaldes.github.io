@@ -11,7 +11,7 @@ var petalCount;
 
 function setup() {
   canvas = createCanvas(window.innerWidth, window.innerHeight);
-
+ randomSeed(random(100));
 
   strokeWeight(2);
   colorMode(RGB, 255, 255, 255);
@@ -50,7 +50,7 @@ function grow() {
 }
 
 function locate() {
-  randomSeed(random(100));
+ 
   x = random(width);
   y = height;
 
