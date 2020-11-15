@@ -8,18 +8,19 @@ var flowerc;
 let i;
 let s;
 var petalCount;
+let n;
+let nOff=0;
+let m;
 
 function setup() {
   canvas = createCanvas(window.innerWidth, window.innerHeight);
- //randomSeed(random(100));
-ellipseMode(CORNERS);
-fill(100);
   strokeWeight(2);
   colorMode(RGB, 255, 255, 255);
-  stem = color(random(40), random(200), random(40));
+  stem = color(random(40,60), random(255), random(40,60));
   flowerc = color(random(200), random(200), random(200));
   locate();
   background(196, 233, 252);
+  x=random(width);
 }
 
 function draw() {
@@ -34,15 +35,21 @@ function draw() {
 }
 
 function grow() {
+  
+  n=noise(nOff);
+  m=map(n,0,1,-.3,.3);
+  nOff=nOff+.01;
   point(x, y);
   r=random(1);
   if (r<.4) {
-    x=x+random(-.5, .5);
-    y=y+random(-.5, -.5);
+    //x=x+random(-.5, .5);
+    x=x+m;
+    y=y+random(-.5, -.1);
   } else if (r>.4 &&r<.998) {
-    x=x+random(-.5, .5);
-    y=y+random(-.5, .5);
-  } else if (r>.998) {
+    //x=x+random(-.5, .5);
+    x=x+m/2;
+    y=y+random(-.5, .2);
+  } else if (r>.9985) {
      jitterr=random(100, 235);
      jitterg=random(100, 235);
      jitterb=random(100, 235);
@@ -51,7 +58,6 @@ function grow() {
 }
 
 function locate() {
- 
   x = random(width);
   y = height;
 
@@ -73,7 +79,7 @@ function flower() {
     fill(flowerc);
     push();
     translate(x+random(-s/2, s/2), y+random(-s/2, s/2));
-    rotate(PI / random(4));
+    rotate(PI/random(3));
     ellipse(0,0, random(s/2), random(s/2));
     pop();
     petalCount++;
@@ -81,27 +87,4 @@ function flower() {
   } else {
     locate();
   }
-}
-function flower2() {
-  var jitterr=random(100, 235);
-  var jitterg=random(100, 235);
-  var jitterb=random(100, 235);
-  flowerc = color(jitterr+random(-20, 20), jitterg+random(-20, 20), jitterb+random(-20, 20));
-  s=random(flowerCount/20); 
-  for (i=0; i<flowerCount/10; i++) {
-    var xf=random(x+random(-s, s));
-    var yf=random(y+random(-s, s));
-    var d=dist(x, y, xf, yf);
-    if (d>flowerCount/20) {
-      xf=random(x+random(-s, s));
-      yf=random(y+random(-s, s));
-    } else {
-      stroke(flowerc);
-      fill(flowerc);
-      ellipse(x+random(-s, s), y+random(-s, s), random(s/2), random(s/2));
-      flowerc = color(jitterr+random(-30, 20), jitterg+random(-30, 20), jitterb+random(-30, 20));
-    }
-  }
-
-  locate();
 }
