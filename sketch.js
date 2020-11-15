@@ -11,6 +11,9 @@ var petalCount;
 let n;
 let nOff=0;
 let m;
+let yOff;
+let ny;
+let my;
 
 function setup() {
   canvas = createCanvas(window.innerWidth, window.innerHeight);
@@ -35,20 +38,24 @@ function draw() {
 }
 
 function grow() {
-  
+  ny=noise(yOff);
   n=noise(nOff);
+  my=map(ny,0,1,-.3,.3);
   m=map(n,0,1,-.3,.3);
   nOff=nOff+.01;
+  yOff=yOff+.015;
   point(x, y);
   r=random(1);
   if (r<.4) {
     //x=x+random(-.5, .5);
     x=x+m;
-    y=y+random(-.5, -.1);
+   // y=y+random(-.5, -.1);
+    y=y+my;
   } else if (r>.4 &&r<.998) {
     //x=x+random(-.5, .5);
     x=x+m/2;
-    y=y+random(-.5, .2);
+   // y=y+random(-.5, .2);
+    y=y+my;
   } else if (r>.9985) {
      jitterr=random(100, 235);
      jitterg=random(100, 235);
