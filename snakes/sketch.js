@@ -26,12 +26,13 @@ canvas = createCanvas(window.innerWidth, window.innerHeight);
 function draw() {
   //the amount of transparency in background controls trails
   textSize(32);
-  text(score1,20,40);
-  text(score2,width-20,40);
   background(0, 25);
-  fill(255);
+  fill(219,143,11);
   rect(x, y, 10, 10);
+  text(score1,20,40);
+  fill(11, 195, 219);
   rect(x2, y2, 10, 10);
+  text(score2,width-40,40);
   fill(255, 0, 0);
   rect(tx, ty, 10, 10);
   if(sidetoside){ 
