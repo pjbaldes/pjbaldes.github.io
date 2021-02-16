@@ -9,12 +9,13 @@ function setup() {
   createCanvas(1280,800);
  // createCanvas(displayWidth, displayHeight);
  // canvas = createCanvas(window.innerWidth, window.innerHeight);
-  x = width / 2+random(-100,100);
-  y = height / 2+random(-100,100);
-  x2 = width / 2+random(-100,100);
-  y2 = height / 2+random(-100,100);
+ 
   tx = floor(random(0, (width - 100) / 10)) * 10;
   ty = floor(random(0, (height - 100) / 10)) * 10;
+   x = floor(random(0, (width) / 10)) * 10;
+    y = floor(random(0, (height) / 10)) * 10;
+   x2 = floor(random(0, (width) / 10)) * 10;
+    y2 = floor(random(0, (height) / 10)) * 10;
 }
 // function windowResized() {
 //   resizeCanvas(window.innerWidth, window.innerHeight);
