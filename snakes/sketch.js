@@ -4,6 +4,8 @@ let tx, ty;
 let step = 10;
 let sidetoside = true;
 let updown = true;
+let score1=0;
+let score2=0;
 
 function setup() {
   createCanvas(1280,800);
@@ -23,6 +25,9 @@ function setup() {
 
 function draw() {
   //the amount of transparency in background controls trails
+  textSize(32);
+  text(score1,20,40);
+  text(score2,width-20,40);
   background(0, 25);
   fill(255);
   rect(x, y, 10, 10);
@@ -64,11 +69,22 @@ function draw() {
   }
 
 
-  if (x == tx && y == ty || x2 == tx && y2 == ty) {
+  if (x == tx && y == ty){
+    score1++;
     tx = floor(random(0, (width) / 10)) * 10;
     ty = floor(random(0, (height) / 10)) * 10;
     sidetoside = true;
     updown = true;
 
   }
+  if (x2 == tx && y2 == ty){
+    score2++;
+    tx = floor(random(0, (width) / 10)) * 10;
+    ty = floor(random(0, (height) / 10)) * 10;
+    sidetoside = true;
+    updown = true;
+
+  }
+
 }
+
