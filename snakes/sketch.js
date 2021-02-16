@@ -8,7 +8,7 @@ let updown = true;
 function setup() {
  // createCanvas(1280,800);
  // createCanvas(displayWidth, displayHeight);
- //  canvas = createCanvas(window.innerWidth, window.innerHeight);
+  canvas = createCanvas(window.innerWidth, window.innerHeight);
   x = width / 2+random(-100,100);
   y = height / 2+random(-100,100);
   x2 = width / 2+random(-100,100);
