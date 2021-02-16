@@ -32,8 +32,8 @@ function draw() {
   text(score1,20,40);
   fill(11, 195, 219);
   rect(x2, y2, 10, 10);
-  text(score2,width-40,40);
-  fill(255, 0, 0);
+  text(score2,width-80,40);
+  fill(random(255),random(255),random(255));
   rect(tx, ty, 10, 10);
   if(sidetoside){ 
    if(tx>x){
