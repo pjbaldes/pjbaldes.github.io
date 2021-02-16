@@ -8,9 +8,9 @@ let score1=0;
 let score2=0;
 
 function setup() {
-  createCanvas(1280,800);
+ // createCanvas(1280,800);
  // createCanvas(displayWidth, displayHeight);
- // canvas = createCanvas(window.innerWidth, window.innerHeight);
+canvas = createCanvas(window.innerWidth, window.innerHeight);
  
   tx = floor(random(0, (width - 100) / 10)) * 10;
   ty = floor(random(0, (height - 100) / 10)) * 10;
