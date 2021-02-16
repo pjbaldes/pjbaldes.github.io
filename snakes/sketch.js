@@ -9,10 +9,10 @@ function setup() {
  // createCanvas(1280,800);
  // createCanvas(displayWidth, displayHeight);
  //  canvas = createCanvas(window.innerWidth, window.innerHeight);
-  x = width / 2;
-  y = height / 2;
-  x2 = width / 2;
-  y2 = height / 2;
+  x = width / 2+random(-100,100);
+  y = height / 2+random(-100,100);
+  x2 = width / 2+random(-100,100);
+  y2 = height / 2+random(-100,100);
   tx = floor(random(0, (width - 100) / 10)) * 10;
   ty = floor(random(0, (height - 100) / 10)) * 10;
 }
