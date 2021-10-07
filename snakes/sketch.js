@@ -27,10 +27,10 @@ function draw() {
   //the amount of transparency in background controls trails
   textSize(32);
   background(0, 5);
-  fill(219,143,11);
+  fill(240,0,0);
   rect(x, y, 10, 10);
   text(score1,20,40);
-  fill(11, 195, 219);
+  fill(0,0,240);
   rect(x2, y2, 10, 10);
   text(score2,width-80,40);
   fill(random(255),random(255),random(255));
