@@ -1,0 +1,70 @@
+@charset "UTF-8";
+/* CSS Document */
+
+body html{
+    background-image: url("bg.jpg") no-repeat 	center center fixed;
+	-webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+pj{
+	color:black;
+	background background-color: white;
+	font-family: Roboto;
+	font-size: 24px;
+}
+pj2{
+	color:black;
+	text-align: right;
+	background background-color: white;
+	font-family: Roboto;
+	font-size: 18px;
+}
+a{
+	color:black;
+	text-align: right;
+	background background-color: white;
+	font-family: Roboto;
+	font-size: 18px;
+	
+}
+h1{
+    color: black;
+
+    background: white;
+    font-family: Roboto;
+    font-size: 24px;
+	text-align: left;
+	display: inline-block; /* keeps container wrapped tight to content */
+  position: absolute; /* to absolutely position element */
+  top: 0;
+  left: 5%; /* part1 of centering with translateX/Y */
+  transform: translateX(-5%); /* part2 of centering with translateX/Y */
+  white-space: nowrap; /* text lines will collapse without this */
+  padding:1px;font-size:24px;background-color:aliceblue;
+  }
+
+h2{
+    color: black;
+
+    background: white;
+    font-family: Roboto;
+    font-size: 20px;
+	text-align: left;
+	display: inline-block; /* keeps container wrapped tight to content */
+  position: absolute; /* to absolutely position element */
+  
+  left: 5%; /* part1 of centering with translateX/Y */
+  transform: translateX(-5%); /* part2 of centering with translateX/Y */
+  white-space: nowrap; /* text lines will collapse without this */
+  padding:1px;font-size:20px;background-color:aliceblue;
+  }
+h3{
+	color:aliceblue;
+	font-family: Roboto;
+	font-size: 20px;
+	position: absolute:100px;
+}
+
