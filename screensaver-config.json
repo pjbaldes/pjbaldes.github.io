@@ -1,8 +1,16 @@
 {
   "urls": [
-   
+    "https://www.timeanddate.com/worldclock/fullscreen.html",
+    "https://www.windy.com/-Satellite-satellite?satellite,40.213,6.855,5",
+    "https://earth.nullschool.net/",
+    "https://www.flightradar24.com/44.93,6.85/6",
+    "https://earth.google.com/web/@0,0,0a,22251752.77375655d,35y,0h,0t,0r",
     "https://anvaka.github.io/pm/#/galaxy/npm",
-    "https://stars.chromeexperiments.com/"
+    "https://stars.chromeexperiments.com/",
+    "https://www.youtube.com/embed/86YLFOog4GM?autoplay=1&controls=0&showinfo=0&rel=0",
+    "https://www.youtube.com/embed/4993sBLAzGA?autoplay=1&controls=0&showinfo=0&rel=0",
+    "https://www.shadertoy.com/embed/3l23Rh?gui=false&paused=false&muted=true",
+    "https://particle-love.com/"
   ],
   "refreshInterval": 3600,
   "rotateInterval": 300
