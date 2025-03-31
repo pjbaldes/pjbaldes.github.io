@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>McDonald's 360° Tour</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            color: red;
+            font-size: min(10vw, 120px);
+            white-space: nowrap;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            pointer-events: none;
+            width: 100%;
+        }
+        #debug {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 2000;
+            max-width: 300px;
+        }
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            z-index: 3000;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff0000;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #loading-status {
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="message">i'm lovin' it</div>
+    <div id="debug"></div>
+    <div id="loading">
+        <div class="loader"></div>
+        <div>Finding McDonald's locations across the USA...</div>
+        <div id="loading-status">Searching...</div>
+    </div>
+    
+    <script>
+        // For debugging
+        const debug = document.getElementById('debug');
+        function log(message) {
+            console.log(message);
+            debug.innerHTML += message + '<br>';
+            // Keep only last 10 messages
+            const lines = debug.innerHTML.split('<br>');
+            if (lines.length > 10) {
+                debug.innerHTML = lines.slice(lines.length - 10).join('<br>');
+            }
+        }
+        
+        // Global variables
+        let panorama;
+        let streetViewService;
+        let placesService;
+        let allMcDonaldsLocations = [];
+        let visitedLocations = new Set();
+        let currentLocation = null;
+        
+        // List of US cities/regions to search for McDonald's locations
+        const searchRegions = [
+            { lat: 40.7128, lng: -74.0060, name: "New York" },
+            { lat: 34.0522, lng: -118.2437, name: "Los Angeles" },
+            { lat: 41.8781, lng: -87.6298, name: "Chicago" },
+            { lat: 29.7604, lng: -95.3698, name: "Houston" },
+            { lat: 33.4484, lng: -112.0740, name: "Phoenix" },
+            { lat: 39.9526, lng: -75.1652, name: "Philadelphia" },
+            { lat: 32.7767, lng: -96.7970, name: "Dallas" },
+            { lat: 37.7749, lng: -122.4194, name: "San Francisco" },
+            { lat: 39.7392, lng: -104.9903, name: "Denver" },
+            { lat: 47.6062, lng: -122.3321, name: "Seattle" },
+            { lat: 33.7490, lng: -84.3880, name: "Atlanta" },
+            { lat: 25.7617, lng: -80.1918, name: "Miami" },
+            { lat: 36.1699, lng: -115.1398, name: "Las Vegas" },
+            { lat: 30.2672, lng: -97.7431, name: "Austin" },
+            { lat: 44.9778, lng: -93.2650, name: "Minneapolis" },
+            { lat: 42.3601, lng: -71.0589, name: "Boston" },
+            { lat: 35.2271, lng: -80.8431, name: "Charlotte" },
+            { lat: 39.0997, lng: -94.5786, name: "Kansas City" }
+        ];
+        let currentRegionIndex = 0;
+        
+        function initMap() {
+            log("Initializing McDonald's Tour...");
+            
+            // Create a hidden map for the Places service
+            const mapDiv = document.createElement('div');
+            mapDiv.style.height = '200px';
+            mapDiv.style.width = '200px';
+            mapDiv.style.display = 'none';
+            document.body.appendChild(mapDiv);
+            
+            const hiddenMap = new google.maps.Map(mapDiv, {
+                center: searchRegions[0],
+                zoom: 10
+            });
+            
+            // Create the Street View panorama as our main display
+            panorama = new google.maps.StreetViewPanorama(
+                document.getElementById('map'),
+                {
+                    position: searchRegions[0],
+                    pov: {
+                        heading: 0,
+                        pitch: 0
+                    },
+                    visible: true,
+                    addressControl: false,
+                    linksControl: false,
+                    panControl: false,
+                    enableCloseButton: false,
+                    fullscreenControl: false,
+                    zoomControl: false,
+                    showRoadLabels: false
+                }
+            );
+            
+            // Initialize services
+            streetViewService = new google.maps.StreetViewService();
+            placesService = new google.maps.places.PlacesService(hiddenMap);
+            
+            // Start finding McDonald's locations across the USA
+            findAllMcDonaldsLocations();
+        }
+        
+        function findAllMcDonaldsLocations() {
+            if (currentRegionIndex >= searchRegions.length) {
+                log("Completed search across all regions.");
+                startTourWithRandomLocation();
+                return;
+            }
+            
+            const region = searchRegions[currentRegionIndex];
+            document.getElementById('loading-status').textContent = 
+                `Searching in ${region.name} (${currentRegionIndex + 1}/${searchRegions.length})...`;
+            
+            log(`Searching for McDonald's in ${region.name}...`);
+            
+            const request = {
+                location: region,
+                radius: 25000, // 25km radius
+                keyword: 'McDonald\'s',
+                type: 'restaurant'
+            };
+            
+            placesService.nearbySearch(request, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                    log(`Found ${results.length} McDonald's in ${region.name}`);
+                    
+                    // Process and add each location
+                    results.forEach(place => {
+                        const locationId = place.place_id;
+                        
+                        // Only add if we haven't seen this place before
+                        if (!visitedLocations.has(locationId)) {
+                            visitedLocations.add(locationId);
+                            
+                            allMcDonaldsLocations.push({
+                                lat: place.geometry.location.lat(),
+                                lng: place.geometry.location.lng(),
+                                name: place.name,
+                                address: place.vicinity || "No address available",
+                                placeId: locationId,
+                                region: region.name
+                            });
+                        }
+                    });
+                    
+                    log(`Total unique McDonald's locations so far: ${allMcDonaldsLocations.length}`);
+                } else {
+                    log(`No results for ${region.name} or API error: ${status}`);
+                }
+                
+                // Move to next region
+                currentRegionIndex++;
+                
+                // If we have at least 20 locations, we can start the tour
+                if (allMcDonaldsLocations.length >= 20 && !currentLocation) {
+                    startTourWithRandomLocation();
+                } else {
+                    // Continue searching for more locations
+                    setTimeout(findAllMcDonaldsLocations, 300);
+                }
+            });
+        }
+        
+        function startTourWithRandomLocation() {
+            // Hide the loading screen
+            document.getElementById('loading').style.display = 'none';
+            
+            if (allMcDonaldsLocations.length === 0) {
+                log("No McDonald's locations found. Please check your API key and network connection.");
+                return;
+            }
+            
+            log(`Starting tour with ${allMcDonaldsLocations.length} McDonald's locations`);
+            
+            // Select a random starting location
+            const randomIndex = Math.floor(Math.random() * allMcDonaldsLocations.length);
+            currentLocation = allMcDonaldsLocations[randomIndex];
+            
+            // Mark this location as visited
+            visitedLocations.add("visited_" + currentLocation.placeId);
+            
+            showLocation(currentLocation);
+            
+            // Continue finding more locations in the background
+            if (currentRegionIndex < searchRegions.length) {
+                setTimeout(findAllMcDonaldsLocations, 1000);
+            }
+        }
+        
+        function findNearestMcDonalds(fromLocation) {
+            // Calculate distance to all unvisited locations
+            const unvisitedLocations = allMcDonaldsLocations.filter(loc => 
+                !visitedLocations.has("visited_" + loc.placeId));
+            
+            if (unvisitedLocations.length === 0) {
+                log("Visited all locations, resetting visited status");
+                // Reset visited status for all but the current location
+                visitedLocations.clear();
+                visitedLocations.add("visited_" + fromLocation.placeId);
+                return findNearestMcDonalds(fromLocation);
+            }
+            
+            let nearest = null;
+            let nearestDistance = Infinity;
+            
+            unvisitedLocations.forEach(loc => {
+                const distance = calculateDistance(
+                    fromLocation.lat, fromLocation.lng,
+                    loc.lat, loc.lng
+                );
+                
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearest = loc;
+                }
+            });
+            
+            return { location: nearest, distance: nearestDistance };
+        }
+        
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            // Haversine formula to calculate distance between two points
+            const R = 6371; // Earth radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // Distance in km
+        }
+        
+        function showLocation(location) {
+            log(`Showing McDonald's: ${location.name}`);
+            log(`Address: ${location.address}`);
+            log(`Region: ${location.region}`);
+            
+            // Hide any existing text immediately when changing locations
+            const message = document.getElementById('message');
+            message.style.opacity = '0';
+            
+            // Find a Street View panorama near this location
+            log(`Searching for Street View at: ${location.lat}, ${location.lng}`);
+            streetViewService.getPanorama(
+                {
+                    location: { lat: location.lat, lng: location.lng },
+                    radius: 50, // Try with a small radius first for accuracy
+                    source: google.maps.StreetViewSource.OUTDOOR
+                },
+                (data, status) => {
+                    if (status === google.maps.StreetViewStatus.OK) {
+                        log(`Street View found for ${location.name}!`);
+                        performFullPanorama(data.location.latLng, location);
+                    } else {
+                        log(`No close Street View for ${location.name}, trying with larger radius...`);
+                        
+                        // Try with a larger radius
+                        streetViewService.getPanorama(
+                            {
+                                location: { lat: location.lat, lng: location.lng },
+                                radius: 200, // Larger radius as fallback
+                                source: google.maps.StreetViewSource.OUTDOOR
+                            },
+                            (data, status) => {
+                                if (status === google.maps.StreetViewStatus.OK) {
+                                    log(`Street View found with larger radius for ${location.name}`);
+                                    performFullPanorama(data.location.latLng, location);
+                                } else {
+                                    log(`No Street View available for ${location.name}, finding next location`);
+                                    goToNextNearestLocation();
+                                }
+                            }
+                        );
+                    }
+                }
+            );
+        }
+        
+        function performFullPanorama(position, locationInfo) {
+            // Set the panorama position
+            panorama.setPosition(position);
+            
+            // Start at a random heading
+            let startHeading = Math.floor(Math.random() * 360);
+            
+            panorama.setPov({
+                heading: startHeading,
+                pitch: 0
+            });
+            
+            log(`Found Street View at ${position.lat().toFixed(6)}, ${position.lng().toFixed(6)}`);
+            log(`Starting 360° panorama rotation from heading ${startHeading}°`);
+            
+            // Make sure any existing text is hidden
+            const message = document.getElementById('message');
+            message.style.opacity = '0';
+            
+            // Wait a moment to stabilize
+            setTimeout(() => {
+                // Generate a random duration between 5-9 seconds for gentler movement
+                const rotationDuration = 5000 + Math.floor(Math.random() * 4000);
+                log(`Panorama will take ${(rotationDuration/1000).toFixed(1)} seconds`);
+                
+                // Perform a full 360-degree rotation with human-like movements
+                smoothlyRotate360(startHeading, rotationDuration, () => {
+                    // After rotation FULLY completes, wait a moment to ensure stability, then show text
+                    log(`360° rotation complete - now showing text`);
+                    
+                    // Wait a full second to ensure all movement has completely stopped
+                    setTimeout(() => {
+                        showMessage();
+                    }, 1000);
+                });
+            }, 1000);
+        }
+        
+        function smoothlyRotate360(startHeading, duration, callback) {
+            const startTime = Date.now();
+            
+            // Determine random rotation direction (clockwise or counterclockwise)
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            const rotationAmount = direction * 360; // Full 360-degree rotation in chosen direction
+            const targetHeading = startHeading + rotationAmount;
+            
+            // Create random speed variations
+            const speedPoints = [];
+            const numSpeedChanges = 5 + Math.floor(Math.random() * 6); // 5-10 speed changes
+            
+            for (let i = 0; i < numSpeedChanges; i++) {
+                speedPoints.push({
+                    point: Math.random(),
+                    factor: 0.7 + Math.random() * 0.6 // Gentler speed factors between 0.7x and 1.3x
+                });
+            }
+            
+            // Sort speed points by progress point
+            speedPoints.sort((a, b) => a.point - b.point);
+            
+            // Add endpoints
+            speedPoints.unshift({ point: 0, factor: 1 });
+            speedPoints.push({ point: 1, factor: 1 });
+            
+            // Random pitch variations - more gentle as requested
+            const pitchVariations = [];
+            const numPitchChanges = 3 + Math.floor(Math.random() * 4); // 3-6 pitch changes
+            
+            for (let i = 0; i < numPitchChanges; i++) {
+                pitchVariations.push({
+                    startPoint: Math.random(),
+                    endPoint: Math.min(1, Math.random() + 0.2), // Ensure some duration
+                    amount: (Math.random() * 10) - 5 // Gentler pitch between -5 and +5 degrees
+                });
+            }
+            
+            // Hide text while moving
+            const message = document.getElementById('message');
+            message.style.opacity = '0';
+            
+            function getCurrentSpeedFactor(progress) {
+                // Find which segment we're in
+                for (let i = 1; i < speedPoints.length; i++) {
+                    if (progress <= speedPoints[i].point) {
+                        // Calculate interpolation within this segment
+                        const segmentProgress = (progress - speedPoints[i-1].point) / 
+                                              (speedPoints[i].point - speedPoints[i-1].point);
+                        
+                        // Interpolate speed factor
+                        return speedPoints[i-1].factor + 
+                               (speedPoints[i].factor - speedPoints[i-1].factor) * segmentProgress;
+                    }
+                }
+                return 1; // Default if something goes wrong
+            }
+            
+            function getCurrentPitch(progress) {
+                let pitch = 0;
+                
+                // Add pitch from all active variations
+                pitchVariations.forEach(variation => {
+                    if (progress >= variation.startPoint && progress <= variation.endPoint) {
+                        // Calculate how far we are through this pitch change
+                        const pitchProgress = (progress - variation.startPoint) / 
+                                             (variation.endPoint - variation.startPoint);
+                        
+                        // Apply a sine wave for smooth up and down
+                        const pitchFactor = Math.sin(pitchProgress * Math.PI);
+                        pitch += variation.amount * pitchFactor;
+                    }
+                });
+                
+                return pitch;
+            }
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                let progress = Math.min(elapsed / duration, 1);
+                
+                // Apply speed variations by adjusting the progress
+                const effectiveProgress = getAdjustedProgress(progress);
+                
+                // Calculate current heading with human-like variations
+                const currentHeading = startHeading + (rotationAmount * effectiveProgress);
+                
+                // Calculate current pitch with human-like movements
+                const currentPitch = getCurrentPitch(effectiveProgress);
+                
+                // Update the view
+                panorama.setPov({
+                    heading: ((currentHeading % 360) + 360) % 360, // Normalize to 0-359 range
+                    pitch: currentPitch
+                });
+                
+                // Continue animation until complete
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Ensure we end with a level view
+                    panorama.setPov({
+                        heading: ((startHeading + rotationAmount) % 360 + 360) % 360,
+                        pitch: 0
+                    });
+                    log(`Full 360° panorama completed (${direction > 0 ? 'clockwise' : 'counterclockwise'})`);
+                    if (callback) callback();
+                }
+            }
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                let progress = Math.min(elapsed / duration, 1);
+                
+                // Apply speed variations by adjusting the progress
+                const effectiveProgress = getAdjustedProgress(progress);
+                
+                // Calculate current heading with human-like variations
+                const currentHeading = startHeading + (rotationAmount * effectiveProgress);
+                
+                // Calculate current pitch with human-like movements
+                const currentPitch = getCurrentPitch(effectiveProgress);
+                
+                // Update the view
+                panorama.setPov({
+                    heading: ((currentHeading % 360) + 360) % 360, // Normalize to 0-359 range
+                    pitch: currentPitch
+                });
+                
+                // Continue animation until complete
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Ensure we end with a level view
+                    panorama.setPov({
+                        heading: ((startHeading + rotationAmount) % 360 + 360) % 360,
+                        pitch: 0
+                    });
+                    log(`Full 360° panorama completed (${direction > 0 ? 'clockwise' : 'counterclockwise'})`);
+                    if (callback) callback();
+                }
+            }
+            
+            function getAdjustedProgress(linearProgress) {
+                // Get current speed factor
+                const speedFactor = getCurrentSpeedFactor(linearProgress);
+                
+                // Apply a dynamic non-linear adjustment
+                // This creates a more human-like movement with variations in speed
+                const adjustedProgress = Math.pow(linearProgress, 1/speedFactor);
+                
+                // Keep it bounded between 0 and 1
+                return Math.min(1, Math.max(0, adjustedProgress));
+            }
+            
+            // Start animation
+            animate();
+        }
+        
+        function showMessage() {
+            log("Showing 'i'm lovin' it' message");
+            const message = document.getElementById('message');
+            
+            // Randomly select text alignment
+            const alignments = ['left', 'center', 'right'];
+            const randomAlignment = alignments[Math.floor(Math.random() * alignments.length)];
+            message.style.textAlign = randomAlignment;
+            log(`Text alignment: ${randomAlignment}`);
+            
+            // Show the message
+            message.style.opacity = '1';
+            
+            // Hide it after 2 seconds as requested
+            setTimeout(() => {
+                message.style.opacity = '0';
+                log("Hiding message, waiting 1 second before moving to next location");
+                
+                // Find and go to the next nearest location - after message disappears and 1 second wait
+                setTimeout(() => {
+                    goToNextNearestLocation();
+                }, 1000);
+            }, 2000);
+        }
+        
+        function goToNextNearestLocation() {
+            const { location, distance } = findNearestMcDonalds(currentLocation);
+            
+            if (location) {
+                log(`Found nearest McDonald's: ${location.name} (${distance.toFixed(2)} km away)`);
+                
+                // Mark as visited
+                visitedLocations.add("visited_" + location.placeId);
+                
+                // Update current location
+                currentLocation = location;
+                
+                // Show the location
+                showLocation(location);
+            } else {
+                log("No more locations to visit!");
+            }
+        }
+    </script>
+    
+    <!-- Load the Google Maps JavaScript API with Places library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA00ljIomMZo-KkMsT0BMCm09BCpTM2PTg&libraries=places&callback=initMap" async defer></script>
+</body>
+</html>
