@@ -1,75 +1,116 @@
 let ver = [];
 let hor = [];
 let step = 10;
-let count = 0;
-let count2 = 0;
-let x = 0;
-let y = 0;
-let x2 = 0;
-let y2 = 0;
-let click = 1;
-stroke(250);
+let drawComplete = false;
+let backgroundColor = [55, 87, 145];
+let lastInteractionTime;
+let initialIdleTime = 20000; // 20 seconds until first auto-refresh
+let refreshInterval = 5000;  // 5 seconds between subsequent refreshes
+let autoRefreshEnabled = true;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  fillver();
-  fillhor();
-  background(55,87,145);
   stroke(250);
+  initializePattern();
+  lastInteractionTime = millis(); // Record the starting time
 }
 
 function draw() {
-   drawver();
-  drawhor();
-}
-function drawver() {
-  for (y = ver[count]; y < width*2; y += step * 2) {
-    line(x, y, x, y + step);
+  // Only redraw if the pattern isn't complete
+  if (!drawComplete) {
+    background(backgroundColor);
+    drawPattern();
   }
-
-  count++;
-  y = 0;
-  x += step;
-}
-function drawhor() {
-  for (x2 = hor[count2]; x2 < width*2; x2 += step * 2) {
-    line(x2, y2, x2 + step, y2);
-  }
-
-  count2++;
-  x2 = 0;
-  y2 += step;
-}
-
-function fillver() {
-  for (let i = 0; i < width / step; i++) {
-    var r = random(1);
-    if (r < 0.5) {
-      ver[i] = 0;
-    } else {
-      ver[i] = step;
+  
+  // Check for auto-refresh
+  if (autoRefreshEnabled) {
+    let currentTime = millis();
+    let elapsedTime = currentTime - lastInteractionTime;
+    
+    // First refresh after initialIdleTime, then every refreshInterval
+    if ((elapsedTime > initialIdleTime && elapsedTime < initialIdleTime + refreshInterval) || 
+        (elapsedTime > initialIdleTime && (elapsedTime - initialIdleTime) % refreshInterval < 20)) {
+      // The small threshold (20ms) prevents multiple refreshes in the same frame
+      generateNewPattern();
     }
   }
 }
-function fillhor() {
-  for (let i = 0; i < height / step; i++) {
-    var r = random(1);
-    if (r < 0.5) {
-      hor[i] = 0;
-    } else {
-      hor[i] = step;
+
+function drawPattern() {
+  // Draw vertical lines
+  for (let x = 0; x < width; x += step) {
+    let index = floor(x / step);
+    if (index < ver.length) {
+      for (let y = ver[index]; y < height; y += step * 2) {
+        line(x, y, x, y + step);
+      }
     }
   }
+  
+  // Draw horizontal lines
+  for (let y = 0; y < height; y += step) {
+    let index = floor(y / step);
+    if (index < hor.length) {
+      for (let x = hor[index]; x < width; x += step * 2) {
+        line(x, y, x + step, y);
+      }
+    }
+  }
+  
+  // Mark drawing as complete
+  drawComplete = true;
 }
+
+function initializePattern() {
+  // Reset pattern state
+  ver = [];
+  hor = [];
+  drawComplete = false;
+  
+  // Generate vertical line pattern
+  for (let i = 0; i < ceil(width / step); i++) {
+    ver[i] = random() < 0.5 ? 0 : step;
+  }
+  
+  // Generate horizontal line pattern
+  for (let i = 0; i < ceil(height / step); i++) {
+    hor[i] = random() < 0.5 ? 0 : step;
+  }
+}
+
+function generateNewPattern() {
+  // Change step size
+  step = random(6, 30);
+  // Round step to whole number for cleaner lines
+  step = floor(step);
+  
+  // Generate new pattern
+  initializePattern();
+  
+  // Optional: change background color slightly for visual feedback
+  backgroundColor = [
+    55 + random(-10, 10),
+    87 + random(-10, 10),
+    145 + random(-10, 10)
+  ];
+}
+
 function mousePressed() {
- fillhor();
-  fillver();
-  step=(random(6,30));
-count = 0;
-count2 = 0;
- x = 0;
- y = 0;
-x2 = 0;
-y2 = 0;
-  background(55, 87, 145);
+  generateNewPattern();
+  lastInteractionTime = millis(); // Reset the idle timer on mouse click
+  return false; // Prevent default behavior
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  initializePattern();
+  lastInteractionTime = millis(); // Reset the idle timer on window resize
+}
+
+// Toggle auto-refresh with keyboard
+function keyPressed() {
+  if (key === 'a' || key === 'A') {
+    autoRefreshEnabled = !autoRefreshEnabled;
+    console.log("Auto-refresh " + (autoRefreshEnabled ? "enabled" : "disabled"));
+  }
 }
