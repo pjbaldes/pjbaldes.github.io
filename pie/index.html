@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Pie Chart</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pieCanvas"></canvas>
+
+    <script>
+        // List of words - including abstract concepts and random dictionary words (500 total)
+        const words = [
+            // First 50 words from original list
+            "dignity", "freedom", "justice", "wisdom", "courage", "honesty", "integrity", "loyalty", "empathy", "serenity",
+            "patience", "humility", "creativity", "innocence", "clarity", "mindfulness", "awareness", "intuition", "spirituality", "enlightenment",
+            "tranquility", "curiosity", "ambition", "motivation", "charisma", "sincerity", "generosity", "compassion", "forgiveness", "tolerance",
+            "consciousness", "morality", "ethics", "philosophy", "ideology", "nostalgia", "melancholy", "solitude", "longing", "desire",
+            "hope", "faith", "destiny", "fate", "infinity", "eternity", "mortality", "existence", "essence", "identity",
+            // 450 words from across the entire dictionary
+            "abacus", "abdicate", "aberration", "abject", "abnormal", "abolish", "aboriginal", "abrasive", "abrogate", "abscond",
+            "accolade", "accumulate", "acerbic", "acquiesce", "acrobat", "acronym", "adamant", "admonish", "adumbrate", "advent",
+            "aficionado", "agile", "agnostic", "albatross", "alchemy", "allegiance", "almanac", "alpaca", "ambush", "amulet",
+            "anagram", "anecdote", "animosity", "antithesis", "apogee", "apparition", "archipelago", "ardent", "argonaut", "armageddon",
+            "artifact", "ascension", "asphyxiate", "astringent", "atlas", "atrophy", "audacious", "authentic", "avalanche", "aversion",
+            "axiom", "babble", "balcony", "ballast", "bamboo", "baroque", "bastion", "beatify", "bedlam", "behemoth",
+            "belligerent", "benefactor", "bequest", "berserk", "bibliography", "bijection", "bioluminescence", "biosphere", "birthright", "blasphemy",
+            "blather", "blithe", "boggle", "bombastic", "bourgeois", "brackish", "bramble", "brandish", "bravado", "brazier",
+            "breach", "brevity", "bridle", "broccoli", "bronze", "bucolic", "buffalo", "bulwark", "buoyant", "burlesque",
+            "cadaver", "cadence", "calisthenics", "callous", "calumny", "camaraderie", "canary", "candidacy", "canopy", "cantankerous",
+            "capacious", "capillary", "capitulate", "capricious", "captivate", "caravan", "cardinal", "carousel", "cartographer", "cascade",
+            "castigate", "catalyst", "catapult", "catastrophe", "catharsis", "cathedral", "caustic", "cavalier", "celestial", "centrifuge",
+            "cerulean", "chagrin", "chalice", "chameleon", "champion", "chandeliers", "chaotic", "charlatan", "chasm", "chastise",
+            "cherish", "chicanery", "chimera", "chisel", "chivalry", "choreograph", "chromatic", "chronicle", "chrysalis", "cipher",
+            "circuitous", "circumference", "citadel", "clairvoyant", "clandestine", "cleanse", "cliché", "climax", "clockwork", "coalesce",
+            "cobalt", "cocoon", "coerce", "cognizant", "coherent", "colloquial", "colossal", "comatose", "combustion", "commendable",
+            "commotion", "compendium", "complacent", "complicit", "compunction", "concentric", "conciliatory", "concoction", "conduit", "confluence",
+            "conglomerate", "connoisseur", "consensus", "conspicuous", "constellation", "contagious", "contemplate", "contrite", "convivial", "copious",
+            "coquettish", "cordial", "cornucopia", "coronation", "corpulent", "corroborate", "corrosive", "cosmic", "countenance", "courageous",
+            "covenant", "craven", "crescent", "crestfallen", "crimson", "criterion", "critique", "crucible", "cryptic", "crystallize",
+            "culminate", "culpable", "cultivate", "cumbersome", "cumulative", "cupidity", "curator", "cursory", "cusp", "custodial",
+            "cyanide", "cyclical", "cynical", "dalliance", "damask", "dappled", "debacle", "debilitate", "debonair", "decadent",
+            "decipher", "decorous", "decrepit", "deferential", "defiant", "deftly", "degenerate", "delectable", "deliberate", "delirium",
+            "demagogue", "demeanor", "demure", "denigrate", "denizen", "depravity", "derivative", "dervish", "desecrate", "desiccate",
+            "desolate", "despicable", "destitute", "desultory", "detached", "detonate", "detrimental", "devious", "devotion", "dexterity",
+            "diabolical", "dialectic", "diaphanous", "dichotomy", "didactic", "diffident", "diffuse", "digression", "dilapidated", "diligent",
+            "dilute", "diminutive", "diorama", "diplomat", "dirge", "disarray", "discern", "discipline", "discourse", "discrepancy",
+            "discretion", "disdain", "disenchanted", "dishearten", "disingenuous", "dismal", "disparage", "disparate", "disseminate", "dissent",
+            "dissolution", "dissonant", "distend", "distill", "distortion", "distraught", "divergent", "divination", "divulge", "docile",
+            "doldrums", "dovetail", "draconian", "dubious", "dulcet", "duplicity", "durable", "dynamic", "dystopian", "ebullient",
+            "eccentric", "echelon", "eclectic", "eclipse", "ecstasy", "edifice", "efface", "effervescent", "effrontery", "effusive",
+            "egalitarian", "egregious", "elaborate", "elation", "eligible", "elliptical", "elocution", "elucidate", "elusive", "emanate",
+            "embellish", "embezzle", "emblematic", "emboss", "embrace", "embryonic", "eminent", "empathy", "empirical", "emulate",
+            "encomium", "endemic", "endure", "enervate", "enfeeble", "engender", "enigmatic", "enmity", "ennui", "ensemble",
+            "enthrall", "entice", "entrenched", "enumerate", "envelope", "envisage", "ephemeral", "epicurean", "epiphany", "epitome",
+            "equanimity", "equivocate", "eradicate", "erratic", "erudite", "escalate", "esoteric", "espionage", "ethereal", "ethical",
+            "euphonious", "euphoria", "evacuate", "evanescent", "evasive", "evocative", "exacerbate", "exactitude", "exasperate", "excavate",
+            "exemplary", "exhilarate", "exhort", "existential", "exonerate", "expanse", "expedient", "expertise", "expiate", "explicit",
+            "extol", "extravagant", "exuberant", "facade", "facetious", "facilitate", "facsimile", "factitious", "fallow", "fastidious",
+            "fatalistic", "fatuous", "fauna", "fecund", "felicitous", "ferocious", "fervent", "fickle", "fiduciary", "filigree",
+            "finesse", "firmament", "flagrant", "flamboyant", "fledgling", "flippant", "florid", "flotsam", "flourish", "flummox",
+            "foible", "foreshadow", "forge", "formidable", "fortitude", "fortuitous", "fractious", "fragile", "frantic", "fraternize",
+            "fraudulent", "frenetic", "fresco", "fretful", "frivolous", "frugal", "fulminate", "fulsome", "furlough", "furtive"
+        ];
+
+        // Initialize the canvas
+        const canvas = document.getElementById('pieCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas to full window size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            drawPieChart();
+        }
+
+        // Handle resizing
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Generate a random color
+        function getRandomColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 60%)`;
+        }
+
+        // Draw the pie chart
+        function drawPieChart() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Set pie chart dimensions
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) * 0.325; // 65% of smallest dimension
+
+            // Generate number of sections (3-16)
+            const sectionCount = Math.floor(Math.random() * 14) + 3;
+            
+            // Create array to hold section values
+            let sections = [];
+            let total = 0;
+            
+            // Generate varied section sizes
+            for (let i = 0; i < sectionCount; i++) {
+                let value;
+                // Create three tiers of section sizes
+                if (i % 3 === 0) {
+                    value = 30 + Math.random() * 30; // Large: 30-60
+                } else if (i % 3 === 1) {
+                    value = 15 + Math.random() * 15; // Medium: 15-30
+                } else {
+                    value = 5 + Math.random() * 10; // Small: 5-15
+                }
+                sections.push(value);
+                total += value;
+            }
+            
+            // Normalize to make sum = 1
+            sections = sections.map(section => section / total);
+            
+            // Select random words (without duplicates)
+            const selectedWords = [];
+            const usedIndices = new Set();
+            
+            for (let i = 0; i < sectionCount; i++) {
+                let index;
+                do {
+                    index = Math.floor(Math.random() * words.length);
+                } while (usedIndices.has(index));
+                
+                usedIndices.add(index);
+                selectedWords.push(words[index]);
+            }
+            
+            // Generate colors
+            const colors = Array(sectionCount).fill().map(() => getRandomColor());
+            
+            // Draw pie sections
+            let startAngle = 0;
+            
+            for (let i = 0; i < sectionCount; i++) {
+                const endAngle = startAngle + (Math.PI * 2 * sections[i]);
+                const midAngle = startAngle + (endAngle - startAngle) / 2;
+                
+                // Draw section
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                
+                ctx.fillStyle = colors[i];
+                ctx.fill();
+                
+                // Draw label line
+                const labelRadius = radius * 1.4;
+                const labelX = centerX + Math.cos(midAngle) * labelRadius;
+                const labelY = centerY + Math.sin(midAngle) * labelRadius;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX + Math.cos(midAngle) * radius, centerY + Math.sin(midAngle) * radius);
+                ctx.lineTo(labelX, labelY);
+                ctx.strokeStyle = 'rgba(120, 120, 120, 0.6)';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+                
+                // Draw label text
+                ctx.font = '24px Arial';
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(selectedWords[i], labelX, labelY);
+                
+                // Update start angle for next section
+                startAngle = endAngle;
+            }
+            
+            // Draw outline
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Click to regenerate
+        canvas.addEventListener('click', drawPieChart);
+    </script>
+</body>
+</html>
