@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+  <script>
+    let chars = [];
+    let charSize = 20;
+    let numCharsPerRow;
+    let numRows;
+    let found = false;
+    let foundTime = 0;
+    let scrollY = 0; // Tracks the smooth scroll position
+    let scrollSpeed = 1; // Scroll speed factor set to 1 as requested
+    let foundWord = {active: false, row: -1, col: -1, direction: ''}; // Tracks the found word's position
+    let blinkCounter = 0; // For blinking effect
+    
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      textFont("sans-serif");
+      numCharsPerRow = floor(width / charSize);
+      numRows = floor(height / charSize) + 1; // Add extra row for smooth scrolling
+      resetGrid();
+    }
+
+    function resetGrid() {
+      chars = [];
+      found = false;
+      foundWord = {active: false, row: -1, col: -1, direction: ''};
+      scrollY = 0;
+      for (let i = 0; i < numRows; i++) {
+        chars.push(createRow());
+      }
+    }
+
+    function draw() {
+      background(255);
+      
+      // Update blink counter for found word
+      blinkCounter = (blinkCounter + 1) % 60;
+      let shouldBlink = blinkCounter < 30; // Blink once per second
+      
+      // Draw the characters with smooth scrolling
+      textSize(charSize);
+      textAlign(LEFT, TOP);
+      
+      for (let row = 0; row < numRows; row++) {
+        for (let col = 0; col < numCharsPerRow; col++) {
+          // Calculate y position with smooth scrolling offset
+          let yPos = row * charSize - scrollY;
+          
+          // Only draw characters that are visible on screen
+          if (yPos > -charSize && yPos < height) {
+            // Determine if this character is part of the found word
+            let isPartOfFoundWord = false;
+            
+            if (foundWord.active) {
+              if (foundWord.direction === 'horizontal' && 
+                  row === foundWord.row && 
+                  col >= foundWord.col && 
+                  col < foundWord.col + 4) {
+                isPartOfFoundWord = true;
+              } else if (foundWord.direction === 'vertical' && 
+                         col === foundWord.col && 
+                         row >= foundWord.row && 
+                         row < foundWord.row + 4) {
+                isPartOfFoundWord = true;
+              }
+            }
+            
+            // Set text color based on whether it's part of the found word and blinking
+            if (isPartOfFoundWord && found) {
+              if (shouldBlink) {
+                fill(255, 0, 0); // Red when blinking on
+              } else {
+                fill(255, 180, 180); // Light red when blinking off
+              }
+            } else if (isMatch(row, col)) {
+              fill(255, 0, 0); // Still highlight potential matches in red
+            } else {
+              fill(0); // Regular text is black
+            }
+            
+            text(chars[row][col], col * charSize, yPos);
+          }
+        }
+      }
+      
+      // Check for matches if not already found
+      if (!found) {
+        let foundPosition = checkForWord();
+        if (foundPosition.found) {
+          foundWord = {
+            active: true,
+            row: foundPosition.row,
+            col: foundPosition.col,
+            direction: foundPosition.direction
+          };
+          
+          // Don't set found=true yet, wait until word scrolls to middle
+        }
+      }
+      
+      // If we found a word but haven't stopped yet
+      if (foundWord.active && !found) {
+        // Calculate the y position of the found word
+        let yPosition;
+        if (foundWord.direction === 'horizontal') {
+          yPosition = foundWord.row * charSize - scrollY;
+        } else { // vertical
+          yPosition = foundWord.row * charSize - scrollY;
+        }
+        
+        // Check if word is near the middle of the screen vertically
+        let middleY = height / 2;
+        let tolerance = charSize; // How close to the middle before stopping
+        
+        if (Math.abs(yPosition - middleY) < tolerance) {
+          // Word is in the middle, stop scrolling and celebrate
+          found = true;
+          foundTime = millis();
+        }
+      }
+      
+      if (found) {
+        // Display the celebration message
+        if (millis() - foundTime > 5000) {
+          resetGrid();
+        } else {
+          // Draw "WE'VE FOUND IT!" in big text
+          fill(255, 0, 0);
+          textSize(width / 8); // Large text
+          textAlign(CENTER, TOP);
+          text("WE'VE FOUND IT!", width / 2, 10);
+        }
+      } else {
+        // Only increment scroll if not found or if found but not yet in position
+        scrollY += scrollSpeed;
+        
+        // When we've scrolled one character height, add a new row and remove the top row
+        if (scrollY >= charSize) {
+          scrollY -= charSize; // Reset the scroll position
+          chars.shift();  // Remove top row
+          chars.push(createRow()); // Add new row at bottom
+          
+          // Update the found word row position if a word has been found
+          if (foundWord.active) {
+            foundWord.row--;
+          }
+        }
+      }
+    }
+
+    function createRow() {
+      let newRow = [];
+      for (let i = 0; i < numCharsPerRow; i++) {
+        newRow.push(randomChar());
+      }
+      return newRow;
+    }
+
+    function randomChar() {
+      // Include only letters, no numbers
+      let charSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+      // Add a higher chance of the specific letters we're looking for to make matches more likely
+      if (random() < 0.08) {
+        return "FUCKfuck".charAt(floor(random(8)));
+      }
+      return charSet.charAt(floor(random(charSet.length)));
+    }
+
+    function checkForWord() {
+      let targetLower = "fuck";
+      let result = {found: false, row: -1, col: -1, direction: ''};
+      
+      // Check horizontally
+      for (let row = 0; row < numRows; row++) {
+        for (let col = 0; col <= numCharsPerRow - 4; col++) {
+          let horizontalChars = chars[row].slice(col, col + 4).join("").toLowerCase();
+          if (horizontalChars === targetLower) {
+            result = {found: true, row: row, col: col, direction: 'horizontal'};
+            return result;
+          }
+        }
+      }
+
+      // Check vertically
+      for (let col = 0; col < numCharsPerRow; col++) {
+        for (let row = 0; row <= numRows - 4; row++) {
+          let verticalChars = (chars[row][col] + chars[row + 1][col] + chars[row + 2][col] + chars[row + 3][col]).toLowerCase();
+          if (verticalChars === targetLower) {
+            result = {found: true, row: row, col: col, direction: 'vertical'};
+            return result;
+          }
+        }
+      }
+
+      return result;
+    }
+
+    function isMatch(row, col) {
+      let targetLower = "fuck";
+
+      // Check horizontal match - case insensitive
+      if (col <= numCharsPerRow - 4) {
+        let horizontalChars = chars[row].slice(col, col + 4).join("").toLowerCase();
+        if (horizontalChars === targetLower) return true;
+      }
+
+      // Check vertical match - case insensitive
+      if (row <= numRows - 4) {
+        let verticalChars = (chars[row][col] + chars[row + 1][col] + chars[row + 2][col] + chars[row + 3][col]).toLowerCase();
+        if (verticalChars === targetLower) return true;
+      }
+
+      return false;
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+      numCharsPerRow = floor(width / charSize);
+      numRows = floor(height / charSize) + 1; // Add extra row for smooth scrolling
+      resetGrid();
+    }
+  </script>
+</body>
+</html>
