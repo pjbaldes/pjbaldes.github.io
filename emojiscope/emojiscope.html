@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Slot Machine</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #ffffff;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #canvas {
+            background-color: #ffffff;
+            border: none;
+        }
+        #title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #333;
+            font-weight: bold;
+        }
+        #instructions {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -130%);
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            transition: opacity 0.5s ease-out;
+        }
+        #copyright {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="title">Emojiscope 2.1</div>
+    <div id="instructions">click for your emojiscope</div>
+    <canvas id="canvas"></canvas>
+    <div id="copyright">pjbaldes 2025</div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // State variables
+        let isSpinning = false;
+        let isSlowing = false;
+        let slots = [];
+        let firstClick = true;
+        
+        // Emoji arrays (same as your original code)
+        const smileys=["😀","😃","😄","😁","😆","😅","😂","🤣","🥲","🥹","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😮‍💨","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🫣","🤗","🫡","🤔","🫢","🤭","🤫","🤥","😶","😶‍🌫️","😐","😑","😬","🫨","🫠","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","😵‍💫","🫥","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾"];
+        const people=["👶","👧","🧒","👦","👩","🧑","👨","👩‍🦱","🧑‍🦱","👨‍🦱","👩‍🦰","🧑‍🦰","👨‍🦰","👱‍♀️","👱","👱‍♂️","👩‍🦳","🧑‍🦳","👨‍🦳","👩‍🦲","🧑‍🦲","👨‍🦲","🧔‍♀️","🧔","🧔‍♂️","👵","🧓","👴","👲","👳‍♀️","👳","👳‍♂️","🧕","👮‍♀️","👮","👮‍♂️","👷‍♀️","👷","👷‍♂️","💂‍♀️","💂","💂‍♂️","🕵️‍♀️","🕵️","🕵️‍♂️","👩‍⚕️","🧑‍⚕️","👨‍⚕️","👩‍🌾","🧑‍🌾","👨‍🌾","👩‍🍳","🧑‍🍳","👨‍🍳","👩‍🎓","🧑‍🎓","👨‍🎓","👩‍🎤","🧑‍🎤","👨‍🎤","👩‍🏫","🧑‍🏫","👨‍🏫","👩‍🏭","🧑‍🏭","👨‍🏭","👩‍💻","🧑‍💻","👨‍💻","👩‍💼","🧑‍💼","👨‍💼","👩‍🔧","🧑‍🔧","👨‍🔧","👩‍🔬","🧑‍🔬","👨‍🔬","👩‍🎨","🧑‍🎨","👨‍🎨","👩‍🚒","🧑‍🚒","👨‍🚒","👩‍✈️","🧑‍✈️","👨‍✈️","👩‍🚀","🧑‍🚀","👨‍🚀","👩‍⚖️","🧑‍⚖️","👨‍⚖️","👰‍♀️","👰","👰‍♂️","🤵‍♀️","🤵","🤵‍♂️","👸","🫅","🤴","🥷","🦸‍♀️","🦸","🦸‍♂️","🦹‍♀️","🦹","🦹‍♂️","🤶","🧑‍🎄","🎅","🧙‍♀️","🧙","🧙‍♂️","🧝‍♀️","🧝","🧝‍♂️","🧛‍♀️","🧛","🧛‍♂️","🧟‍♀️","🧟","🧟‍♂️","🧞‍♀️","🧞","🧞‍♂️","🧜‍♀️","🧜","🧜‍♂️","🧚‍♀️","🧚","🧚‍♂️","🧌","👼","🤰","🫄","🫃","🤱","👩‍🍼","🧑‍🍼","👨‍🍼","🙇‍♀️","🙇","🙇‍♂️","💁‍♀️","💁","💁‍♂️","🙅‍♀️","🙅","🙅‍♂️","🙆‍♀️","🙆","🙆‍♂️","🙋‍♀️","🙋","🙋‍♂️","🧏‍♀️","🧏","🧏‍♂️","🤦‍♀️","🤦","🤦‍♂️","🤷‍♀️","🤷","🤷‍♂️","🙎‍♀️","🙎","🙎‍♂️","🙍‍♀️","🙍","🙍‍♂️","💇‍♀️","💇","💇‍♂️","💆‍♀️","💆","💆‍♂️","🧖‍♀️","🧖","🧖‍♂️","💅","🤳","💃","🕺","👯‍♀️","👯","👯‍♂️","🕴","👩‍🦽","🧑‍🦽","👨‍🦽","👩‍🦼","🧑‍🦼","👨‍🦼","🚶‍♀️","🚶","🚶‍♂️","👩‍🦯","🧑‍🦯","👨‍🦯","🧎‍♀️","🧎","🧎‍♂️","🏃‍♀️","🏃","🏃‍♂️","🧍‍♀️","🧍","🧍‍♂️","👭","🧑‍🤝‍🧑","👬","👫","👩‍❤️‍👩","💑","👨‍❤️‍👨","👩‍❤️‍👨","👩‍❤️‍💋‍👩","💏","👨‍❤️‍💋‍👨","👩‍❤️‍💋‍👨","👪","👨‍👩‍👦","👨‍👩‍👧","👨‍👩‍👧‍👦","👨‍👩‍👦‍👦","👨‍👩‍👧‍👧","👨‍👨‍👦","👨‍👨‍👧","👨‍👨‍👧‍👦","👨‍👨‍👦‍👦","👨‍👨‍👧‍👧","👩‍👩‍👦","👩‍👩‍👧","👩‍👩‍👧‍👦","👩‍👩‍👦‍👦","👩‍👩‍👧‍👧","👨‍👦","👨‍👦‍👦","👨‍👧","👨‍👧‍👦","👨‍👧‍👧","👩‍👦","👩‍👦‍👦","👩‍👧","👩‍👧‍👦","👩‍👧‍👧","🗣","👤","👥","🫂"];
+        const gestures= ["👋","🤚","🖐","✋","🖖","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","🫵","🫱","🫲","🫸","🫷","🫳","🫴","👈","👉","👆","🖕","👇","👍","👎","✊","👊","🤛","🤜","👏","🫶","🙌","👐","🤲","🤝","🙏","💅","🤳","💪","🦾","🦵","🦿","🦶","👣","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁","👅","👄","🫦","💋","🩸"];
+        const animals= ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐻‍❄️","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐦‍⬛","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🪱","🐛","🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","🦗","🕷","🕸","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🪼","🪸","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🫏","🦍","🦧","🦣","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🦬","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🫎","🐕","🐩","🦮","🐕‍🦺","🐈","🐈‍⬛","🪽","🪶","🐓","🦃","🦤","🦚","🦜","🦢","🪿","🦩","🕊","🐇","🦝","🦨","🦡","🦫","🦦","🦥","🐁","🐀","🐿","🦔","🐾","🐉","🐲","🌵","🎄","🌲","🌳","🌴","🪹","🪺","🪵","🌱","🌿","☘️","🍀","🎍","🪴","🎋","🍃","🍂","🍁","🍄","🐚","🪨","🌾","💐","🌷","🪷","🌹","🥀","🌺","🌸","🪻","🌼","🌻","🌞","🌝","🌛","🌜","🌚","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌙","🌎","🌍","🌏","🪐","💫","⭐️","🌟","✨","💥","🔥","🌪","🌈","🌤","⛅️","🌥","🌦","🌧","🌩","🌨","⛄️","🌬","💨","💧","💦","🫧","🌊"];
+        const food= ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🫛","🥬","🥒","🌶","🫑","🌽","🥕","🫒","🧄","🧅","🫚","🥔","🍠","🫘","🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🧈","🥞","🧇","🥓","🥩","🍗","🍖","🦴","🌭","🍔","🍟","🍕","🫓","🥪","🥙","🧆","🌮","🌯","🫔","🥗","🥘","🫕","🥫","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥠","🥮","🍢","🍡","🍧","🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🌰","🥜","🍯","🥛","🍼","🫖","☕️","🍵","🧃","🥤","🧋","🫙","🍶","🍺","🍻","🥂","🍷","🫗","🥃","🍸","🍹","🧉","🍾","🧊","🥄","🍴","🍽","🥣","🥡","🥢","🧂"];
+        const hearts= ["🩷","🧡","💛","💚","💙","🩵","💜","🖤","🩶","🤍","🤎","❤️‍🔥","❤️‍🩹","💔","💕","💞","💓","💗","💖","💘","💝"];
+        
+        const allEmojis = [smileys, people, gestures, animals, food, hearts];
+        
+        // Slot machine class
+        class Slot {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.speed = 0;
+                this.maxSpeed = 60;
+                this.deceleration = 0.4 + Math.random() * 0.6;
+                this.currentEmoji = this.getRandomEmoji();
+                this.targetEmoji = null;
+                this.isStopped = false;
+                this.changeTimer = 0;
+                this.stopDelay = 0;
+                this.delayTimer = 0;
+            }
+            
+            getRandomEmoji() {
+                const category = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+                return category[Math.floor(Math.random() * category.length)];
+            }
+            
+            spin() {
+                this.speed = this.maxSpeed;
+                this.isStopped = false;
+            }
+            
+            startSlowing() {
+                this.targetEmoji = this.getRandomEmoji();
+                // Add delay based on slot position
+                const slotIndex = this.x < canvas.width * 0.3 ? 0 : 
+                                  this.x < canvas.width * 0.6 ? 1 : 2;
+                // First slot: 100ms, Second: 100+700=800ms, Third: 100+700+1200=2000ms
+                this.stopDelay = slotIndex === 0 ? 100 : 
+                                 slotIndex === 1 ? 800 : 2000;
+                this.delayTimer = 0;
+            }
+            
+            update() {
+                if (!this.isStopped) {
+                    if (isSlowing) {
+                        // Add delay before each slot starts decelerating
+                        if (this.delayTimer < this.stopDelay) {
+                            this.delayTimer += 16; // approximately 1 frame at 60fps
+                            // Keep spinning at full speed until delay is reached
+                            this.changeTimer += this.speed;
+                            if (this.changeTimer > 20) {
+                                this.currentEmoji = this.getRandomEmoji();
+                                this.changeTimer = 0;
+                            }
+                        } else {
+                            this.speed = Math.max(0, this.speed - this.deceleration);
+                            
+                            if (this.speed < 0.5) {
+                                this.speed = 0;
+                                this.isStopped = true;
+                                this.currentEmoji = this.targetEmoji;
+                            } else {
+                                // Continue changing while slowing down
+                                this.changeTimer += this.speed;
+                                if (this.changeTimer > 20) {
+                                    this.currentEmoji = this.getRandomEmoji();
+                                    this.changeTimer = 0;
+                                }
+                            }
+                        }
+                    } else {
+                        // Normal spinning
+                        if (this.speed > 0) {
+                            this.changeTimer += this.speed;
+                            if (this.changeTimer > 20) {
+                                this.currentEmoji = this.getRandomEmoji();
+                                this.changeTimer = 0;
+                            }
+                        }
+                    }
+                }
+                // If stopped, do nothing - no emoji changes
+            }
+            
+            draw() {
+                ctx.font = `${canvas.width / 6}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.currentEmoji, this.x, this.y);
+            }
+        }
+        
+        // Initialize slots
+        function initSlots() {
+            const slotPositions = [
+                { x: canvas.width * 0.25, y: canvas.height * 0.5 },
+                { x: canvas.width * 0.5, y: canvas.height * 0.5 },
+                { x: canvas.width * 0.75, y: canvas.height * 0.5 }
+            ];
+            
+            slots = slotPositions.map(pos => new Slot(pos.x, pos.y));
+        }
+        
+        // Handle click/touch
+        function handleInteraction(e) {
+            if (e) {
+                e.preventDefault();
+            }
+            
+            // Fade out instructions on first click
+            if (firstClick) {
+                const instructions = document.getElementById('instructions');
+                instructions.style.opacity = '0';
+                setTimeout(() => {
+                    instructions.style.display = 'none';
+                }, 500);
+                firstClick = false;
+            }
+            
+            // If slots are spinning but not slowing, start the slow down
+            if (isSpinning && !isSlowing) {
+                // Start slowing down immediately on click
+                isSlowing = true;
+                slots.forEach(slot => slot.startSlowing());
+            }
+            // If all slots have stopped, start a new spin
+            else if (!isSpinning || slots.every(slot => slot.isStopped)) {
+                // Reset and start spinning again
+                isSpinning = true;
+                isSlowing = false;
+                slots.forEach(slot => {
+                    slot.isStopped = false;
+                    slot.speed = slot.maxSpeed;
+                    slot.changeTimer = 0;
+                });
+            }
+        }
+        
+        // Check if all slots have stopped
+        function checkAllStopped() {
+            if (isSpinning && slots.every(slot => slot.isStopped)) {
+                isSpinning = false;
+                // Check for jackpot (all three emojis match)
+                if (slots[0].currentEmoji === slots[1].currentEmoji && 
+                    slots[1].currentEmoji === slots[2].currentEmoji) {
+                    setTimeout(() => {
+                        alert('🎉 JACKPOT! 🎉');
+                    }, 100);
+                }
+            }
+        }
+        
+        // Animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw slots
+            slots.forEach(slot => {
+                slot.update();
+                slot.draw();
+            });
+            
+            checkAllStopped();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Event listeners
+        canvas.addEventListener('click', handleInteraction);
+        canvas.addEventListener('touchstart', handleInteraction, { passive: false });
+        
+        // Handle mobile devices - prevent default behaviors
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initSlots();
+        });
+        
+        // Start the application
+        initSlots();
+        
+        // Start with spinning
+        isSpinning = true;
+        isSlowing = false;
+        slots.forEach(slot => slot.spin());
+        
+        animate();
+    </script>
+</body>
+</html>
