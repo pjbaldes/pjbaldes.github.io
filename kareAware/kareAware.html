@@ -1,0 +1,522 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>susan kare is everywhere</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: monospace;
+      background-color: white;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    #saveButton {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: rgba(255, 255, 255, 0.7);
+      border: 1px solid #000;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: opacity 0.5s ease;
+      z-index: 100;
+    }
+    #saveButton:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <button id="saveButton">Save</button>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Global variables
+    // Initialize with valid index
+    let bgPatternIndex = 0;
+    
+    // Resize canvas to fill window
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      draw(); // Redraw when resized
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    // Create basic patterns that don't rely on createPattern
+    function createBasicPatterns() {
+      // We'll create an array of pattern drawing functions instead of canvas patterns
+      const patternFunctions = [];
+      
+      // Pattern 1: Solid black
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(x, y, width, height);
+      });
+      
+      // Pattern 2: Light gray (25% black)
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#000';
+        const scale = Math.max(1, Math.floor(width / 100));
+        for (let yPos = y; yPos < y + height; yPos += scale * 2) {
+          for (let xPos = x; xPos < x + width; xPos += scale * 2) {
+            ctx.fillRect(xPos, yPos, scale, scale);
+          }
+        }
+      });
+      
+      // Pattern 3: Medium gray (50% black)
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#000';
+        const scale = Math.max(1, Math.floor(width / 100));
+        for (let yPos = y; yPos < y + height; yPos += scale) {
+          for (let xPos = x; xPos < x + width; xPos += scale) {
+            if ((Math.floor(xPos / scale) % 2 === 0 && Math.floor(yPos / scale) % 2 === 0) || 
+                (Math.floor(xPos / scale) % 2 === 1 && Math.floor(yPos / scale) % 2 === 1)) {
+              ctx.fillRect(xPos, yPos, scale, scale);
+            }
+          }
+        }
+      });
+      
+      // Pattern 4: Dark gray (75% black)
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#fff';
+        const scale = Math.max(1, Math.floor(width / 100));
+        for (let yPos = y; yPos < y + height; yPos += scale * 2) {
+          for (let xPos = x; xPos < x + width; xPos += scale * 2) {
+            ctx.fillRect(xPos, yPos, scale, scale);
+          }
+        }
+      });
+      
+      // Pattern 5: Vertical stripes
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#000';
+        const scale = Math.max(1, Math.floor(width / 100));
+        for (let xPos = x; xPos < x + width; xPos += scale * 2) {
+          ctx.fillRect(xPos, y, scale, height);
+        }
+      });
+      
+      // Pattern 6: Horizontal stripes
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#000';
+        const scale = Math.max(1, Math.floor(width / 100));
+        for (let yPos = y; yPos < y + height; yPos += scale * 2) {
+          ctx.fillRect(x, yPos, width, scale);
+        }
+      });
+      
+      // Pattern 7: Checkered pattern
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#000';
+        const checkSize = Math.max(4, Math.floor(width / 30));
+        for (let yPos = y; yPos < y + height; yPos += checkSize * 2) {
+          for (let xPos = x; xPos < x + width; xPos += checkSize * 2) {
+            ctx.fillRect(xPos, yPos, checkSize, checkSize);
+            ctx.fillRect(xPos + checkSize, yPos + checkSize, checkSize, checkSize);
+          }
+        }
+      });
+      
+      // Pattern 8: Dots
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#000';
+        const scale = Math.max(1, Math.floor(width / 100));
+        for (let yPos = y; yPos < y + height; yPos += scale * 4) {
+          for (let xPos = x; xPos < x + width; xPos += scale * 4) {
+            ctx.fillRect(xPos, yPos, scale, scale);
+          }
+        }
+      });
+      
+      // Pattern 9: Grid
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#000';
+        const gridSize = Math.max(4, Math.floor(width / 30));
+        for (let yPos = y; yPos < y + height; yPos += gridSize) {
+          ctx.fillRect(x, yPos, width, 1);
+        }
+        for (let xPos = x; xPos < x + width; xPos += gridSize) {
+          ctx.fillRect(xPos, y, 1, height);
+        }
+      });
+      
+      // Pattern 10: Diagonal lines (/)
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const spacing = Math.max(4, Math.floor(width / 30));
+        for (let i = -height; i < width + height; i += spacing) {
+          ctx.moveTo(x + i, y);
+          ctx.lineTo(x + i + height, y + height);
+        }
+        ctx.stroke();
+      });
+      
+      // Pattern 11: Diagonal lines (\)
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const spacing = Math.max(4, Math.floor(width / 30));
+        for (let i = -height; i < width + height; i += spacing) {
+          ctx.moveTo(x + i, y + height);
+          ctx.lineTo(x + i + height, y);
+        }
+        ctx.stroke();
+      });
+      
+      // Pattern 12: Cross-hatch
+      patternFunctions.push((x, y, width, height) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        const spacing = Math.max(4, Math.floor(width / 30));
+        
+        // Horizontal lines
+        ctx.beginPath();
+        for (let yPos = y; yPos < y + height; yPos += spacing) {
+          ctx.moveTo(x, yPos);
+          ctx.lineTo(x + width, yPos);
+        }
+        // Vertical lines
+        for (let xPos = x; xPos < x + width; xPos += spacing) {
+          ctx.moveTo(xPos, y);
+          ctx.lineTo(xPos, y + height);
+        }
+        ctx.stroke();
+      });
+      
+      return patternFunctions;
+    }
+    
+    // Generate multiple random shapes
+    function drawRandomShapes(patterns, bgIndex) {
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      // Track used shapes to avoid repetition
+      const usedShapes = new Set();
+      
+      // Create 4-8 shapes
+      const numShapes = 4 + Math.floor(Math.random() * 5);
+      
+      for (let s = 0; s < numShapes; s++) {
+        // Select a random pattern different from background
+        let patternIndex;
+        do {
+          patternIndex = Math.floor(Math.random() * patterns.length);
+        } while (patternIndex === bgIndex);
+        
+        // Generate a unique shape signature
+        let shapeType, shapeSize, posX, posY;
+        let shapeSig;
+        
+        do {
+          // Pick a random shape type (0-8 for variety)
+          shapeType = Math.floor(Math.random() * 9);
+          
+          // Randomize position
+          posX = width * (0.1 + Math.random() * 0.8);
+          posY = height * (0.1 + Math.random() * 0.8); 
+          
+          // Random size
+          shapeSize = Math.min(width, height) * (0.05 + Math.random() * 0.35);
+          
+          // Create shape signature
+          shapeSig = `${shapeType}-${Math.round(shapeSize/10)}-${Math.round(posX/20)}-${Math.round(posY/20)}`;
+        } while (usedShapes.has(shapeSig));
+        
+        // Add to used shapes
+        usedShapes.add(shapeSig);
+        
+        // Apply rotation for more dynamism
+        const rotation = Math.random() * Math.PI * 2;
+        ctx.save();
+        ctx.translate(posX, posY);
+        ctx.rotate(rotation);
+        
+        // Create a clipping path for the shape
+        createShapePath(shapeType, shapeSize);
+        ctx.clip();
+        
+        // Fill with pattern
+        const shapeWidth = shapeSize * 2;
+        const shapeHeight = shapeSize * 2;
+        patterns[patternIndex](-shapeSize, -shapeSize, shapeWidth, shapeHeight);
+        
+        ctx.restore();
+      }
+    }
+    
+    // Function to create shape paths
+    function createShapePath(shapeType, shapeSize) {
+      switch (shapeType) {
+        case 0: // Star
+          const numPoints = 4 + Math.floor(Math.random() * 7); // 4-10 points
+          const outerRadius = shapeSize;
+          const innerRadius = outerRadius * (0.3 + Math.random() * 0.3);
+          
+          ctx.beginPath();
+          for (let i = 0; i < numPoints * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = (Math.PI * 2 * i) / (numPoints * 2);
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          break;
+          
+        case 1: // Blob
+          ctx.beginPath();
+          const blobPoints = 6 + Math.floor(Math.random() * 6);
+          const baseRadius = shapeSize;
+          
+          for (let i = 0; i <= blobPoints; i++) {
+            const angle = (Math.PI * 2 * i) / blobPoints;
+            const radiusVariation = baseRadius * (0.5 + 0.5 * Math.random());
+            const x = radiusVariation * Math.cos(angle);
+            const y = radiusVariation * Math.sin(angle);
+            
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              const prevAngle = (Math.PI * 2 * (i-1)) / blobPoints;
+              const cpx1 = baseRadius * 0.8 * Math.cos(prevAngle + Math.PI/(blobPoints*2));
+              const cpy1 = baseRadius * 0.8 * Math.sin(prevAngle + Math.PI/(blobPoints*2));
+              const cpx2 = baseRadius * 0.8 * Math.cos(angle - Math.PI/(blobPoints*2));
+              const cpy2 = baseRadius * 0.8 * Math.sin(angle - Math.PI/(blobPoints*2));
+              
+              ctx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, x, y);
+            }
+          }
+          ctx.closePath();
+          break;
+          
+        case 2: // Single circle
+          ctx.beginPath();
+          ctx.arc(0, 0, shapeSize, 0, Math.PI * 2);
+          ctx.closePath();
+          break;
+          
+        case 3: // Regular polygon
+          const sides = 3 + Math.floor(Math.random() * 7); // 3-9 sides
+          
+          ctx.beginPath();
+          for (let i = 0; i < sides; i++) {
+            const angle = (Math.PI * 2 * i) / sides;
+            const x = shapeSize * Math.cos(angle);
+            const y = shapeSize * Math.sin(angle);
+            
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          break;
+          
+        case 4: // Abstract squiggle
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          
+          let lastX = 0;
+          let lastY = 0;
+          const numSegments = 3 + Math.floor(Math.random() * 5);
+          
+          for (let i = 0; i < numSegments; i++) {
+            const nextX = lastX + shapeSize * (-0.5 + Math.random());
+            const nextY = lastY + shapeSize * (-0.5 + Math.random());
+            const ctrlX1 = lastX + shapeSize * (-0.5 + Math.random());
+            const ctrlY1 = lastY + shapeSize * (-0.5 + Math.random());
+            const ctrlX2 = nextX + shapeSize * (-0.5 + Math.random());
+            const ctrlY2 = nextY + shapeSize * (-0.5 + Math.random());
+            
+            ctx.bezierCurveTo(ctrlX1, ctrlY1, ctrlX2, ctrlY2, nextX, nextY);
+            lastX = nextX;
+            lastY = nextY;
+          }
+          
+          // Return to start
+          ctx.bezierCurveTo(lastX * 0.5, lastY * 0.5, 0, 0, 0, 0);
+          ctx.closePath();
+          break;
+          
+        case 5: // Crescent/moon shape
+          ctx.beginPath();
+          const outerArc = shapeSize;
+          const innerArc = shapeSize * 0.6;
+          const offsetX = shapeSize * 0.4;
+          
+          // Outer arc
+          ctx.arc(0, 0, outerArc, 0, Math.PI * 2);
+          
+          // Cut out inner arc
+          ctx.moveTo(offsetX + innerArc, 0);
+          ctx.arc(offsetX, 0, innerArc, 0, Math.PI * 2, true);
+          ctx.closePath();
+          break;
+          
+        case 6: // Cloud-like shape
+          ctx.beginPath();
+          const cloudSize = shapeSize * 0.4;
+          
+          // Draw cloud outline
+          ctx.arc(0, 0, cloudSize, 0, Math.PI * 2);
+          ctx.arc(cloudSize * 1.3, 0, cloudSize * 0.9, 0, Math.PI * 2);
+          ctx.arc(cloudSize * 0.8, cloudSize * 0.8, cloudSize, 0, Math.PI * 2);
+          ctx.arc(-cloudSize, cloudSize * 0.3, cloudSize * 0.8, 0, Math.PI * 2);
+          ctx.arc(-cloudSize * 0.6, -cloudSize * 0.7, cloudSize * 0.9, 0, Math.PI * 2);
+          ctx.closePath();
+          break;
+          
+        case 7: // Teardrop
+          ctx.beginPath();
+          const teardropSize = shapeSize;
+          
+          ctx.arc(0, 0, teardropSize * 0.7, Math.PI * 0.5, Math.PI * 1.5);
+          ctx.lineTo(0, teardropSize);
+          ctx.closePath();
+          break;
+          
+        case 8: // Triangle with rounded corners
+          ctx.beginPath();
+          const triSize = shapeSize;
+          const cornerRadius = triSize * 0.2;
+          
+          // Three points of the triangle
+          const p1 = { x: 0, y: -triSize };
+          const p2 = { x: -triSize * 0.866, y: triSize * 0.5 };
+          const p3 = { x: triSize * 0.866, y: triSize * 0.5 };
+          
+          // Draw the triangle sides with rounded corners
+          ctx.moveTo(p1.x, p1.y - cornerRadius);
+          
+          // Side 1
+          ctx.lineTo(p2.x + cornerRadius * 0.866, p2.y - cornerRadius * 0.5);
+          ctx.quadraticCurveTo(p2.x, p2.y, p2.x + cornerRadius * 0.5, p2.y + cornerRadius * 0.866);
+          
+          // Side 2
+          ctx.lineTo(p3.x - cornerRadius * 0.5, p3.y + cornerRadius * 0.866);
+          ctx.quadraticCurveTo(p3.x, p3.y, p3.x - cornerRadius * 0.866, p3.y - cornerRadius * 0.5);
+          
+          // Side 3
+          ctx.lineTo(p1.x, p1.y - cornerRadius);
+          ctx.closePath();
+          break;
+      }
+    }
+    
+    // Main drawing function
+    function draw() {
+      // Create pattern functions
+      const patternFunctions = createBasicPatterns();
+      
+      // Get random pattern for background
+      const bgIndex = Math.floor(Math.random() * patternFunctions.length);
+      
+      // Update global for later use if needed
+      bgPatternIndex = bgIndex;
+      
+      // Clear canvas first
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Fill background with pattern
+      patternFunctions[bgIndex](0, 0, canvas.width, canvas.height);
+      
+      // Draw multiple random shapes with different patterns
+      drawRandomShapes(patternFunctions, bgIndex);
+    }
+    
+    // Click canvas to generate new pattern immediately
+    canvas.addEventListener('click', draw);
+    
+    // Loop every 10 seconds
+    function animate() {
+      draw();
+      setTimeout(animate, 10000);
+    }
+    
+    // Initial call to start animation
+    animate();
+    
+    // Save functionality
+    const saveButton = document.getElementById('saveButton');
+    let hideTimeout;
+    
+    // Save the canvas as PNG
+    function saveAsImage() {
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.download = 'vintage-mac-pattern.png';
+      
+      // Convert canvas to data URL
+      link.href = canvas.toDataURL('image/png');
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    // Add click event to save button
+    saveButton.addEventListener('click', saveAsImage);
+    
+    // Show/hide button based on mouse movement
+    document.addEventListener('mousemove', function() {
+      // Show button
+      saveButton.style.opacity = '1';
+      
+      // Clear any existing timeout
+      clearTimeout(hideTimeout);
+      
+      // Set new timeout to hide button
+      hideTimeout = setTimeout(function() {
+        saveButton.style.opacity = '0';
+      }, 5000);
+    });
+    
+    // Initial hide after 5 seconds
+    hideTimeout = setTimeout(function() {
+      saveButton.style.opacity = '0';
+    }, 5000);
+  </script>
+</body>
+</html>
