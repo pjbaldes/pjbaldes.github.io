@@ -1,0 +1,721 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Flowchart Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            overflow: hidden;
+        }
+        .container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            display: flex;
+            gap: 5px;
+        }
+        button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            color: #333;
+            padding: 3px 8px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+            border-radius: 2px;
+            cursor: pointer;
+            text-transform: none;
+        }
+        button:hover {
+            background-color: #e0e0e0;
+        }
+        #flowchart {
+            width: 100%;
+            height: 100%;
+            background-color: white;
+        }
+        .node rect {
+            stroke: #555;
+            stroke-width: 2px;
+            fill: #fff;
+        }
+        .node text {
+            font-size: 14px;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .arrow {
+            fill: none;
+            stroke: #555;
+            stroke-width: 2px;
+        }
+        .arrow-head {
+            fill: #555;
+        }
+        .arrow-shared {
+            fill: none;
+            stroke: red;
+            stroke-width: 2px;
+        }
+        .arrow-head-shared {
+            fill: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <button id="generate">visualize</button>
+            <button id="add-node">complicate</button>
+            <button id="download">remember</button>
+        </div>
+        <svg id="flowchart"></svg>
+    </div>
+
+    <script>
+    (function() {
+        // Button label synonyms
+        const visualizeLabels = [
+            "visualize", "envision", "imagine", "picture", "conceptualize", 
+            "perceive", "render", "depict", "illustrate", "portray", 
+            "materialize", "conceive", "project", "discern", "comprehend"
+        ];
+        
+        const complicateLabels = [
+            "complicate", "elaborate", "complexify", "entangle", "convolute", 
+            "compound", "sophisticate", "perplex", "intensify", "diversify", 
+            "ramify", "augment", "extend", "escalate", "amplify"
+        ];
+        
+        const rememberLabels = [
+            "remember", "recall", "recollect", "memorize", "archive", 
+            "preserve", "retain", "store", "record", "document", 
+            "commemorate", "save", "treasure", "conserve", "safeguard"
+        ];
+        
+        // All word categories
+        const jargon = {
+            // Process words
+            process: [
+                "process", "start", "end", "decision", "input", "output", 
+                "data", "action", "task", "check", "verify", "update", 
+                "create", "delete", "modify", "analyze", "review", 
+                "approve", "reject", "send", "receive", "store", "retrieve", 
+                "calculate", "estimate", "compare", "validate", "generate", 
+                "test", "deploy", "monitor", "report", "evaluate", "plan", 
+                "design", "implement", "maintain", "support", "optimize", 
+                "improve", "schedule", "coordinate", "arrange", "organize"
+            ],
+            
+            // AI jargon (single words only)
+            ai: [
+                "algorithm", "attention", "mechanism", "backpropagation", "bias",
+                "vision", "embeddings", "hallucination", "inference", "learning",
+                "neural", "optimization", "prompt", "reinforcement", "supervised",
+                "tokenization", "transfer", "transformer", "unsupervised"
+            ],
+            
+            // Customer service jargon (single words only)
+            customer: [
+                "churn", "escalation", "knowledge", "omnichannel", "pain",
+                "queue", "resolution", "ticket", "touchpoint", "voice",
+                "transfer", "workflow", "journey", "deflection", "sentiment",
+                "service", "ticketing"
+            ],
+            
+            // Finance jargon (single words only)
+            finance: [
+                "arbitrage", "amortization", "benchmark", "bond", "bears", 
+                "bulls", "collateral", "commodity", "derivatives", "dividend", 
+                "equity", "futures", "hedge", "inflation", "leverage", 
+                "liquidity", "margin", "option", "portfolio", "recession", 
+                "securities", "stock", "volatility", "yield", "tranche", 
+                "underwriter", "valuation", "warrant", "capital", "diversification"
+            ],
+            
+            // Team jargon (single words only)
+            team: [
+                "stakeholder", "sprint", "agile", "standup", "retrospective",
+                "milestone", "blockers", "deliverable", "ownership", "accountability",
+                "alignment", "bandwidth", "capacity", "scope", "timeline",
+                "resources", "prioritization", "collaboration", "synergy", "huddle",
+                "cadence", "initiative", "deadline", "backlog", "velocity",
+                "kanban", "burndown", "scrum", "roadmap", "delegate"
+            ]
+        };
+        
+        // Create a single flattened array with all words
+        const allWords = [
+            ...jargon.process,
+            ...jargon.ai,
+            ...jargon.customer,
+            ...jargon.finance,
+            ...jargon.team
+        ];
+        
+        // State variables
+        let svg;
+        let mainGroup; // Main group for all flowchart elements to enable zooming
+        let currentScale = 1.0; // Current zoom scale - using let instead of const
+        let nodes = [];
+        let connections = [];
+        const nodeWidth = 160;
+        const nodeHeight = 60;
+        const padding = 40;
+        
+        // Helper function for random integers
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        // Create text with random words
+        function generateRandomText() {
+            const wordCount = randomInt(1, 5);
+            let text = [];
+            
+            // Get random words
+            for (let i = 0; i < wordCount; i++) {
+                const wordIndex = randomInt(0, allWords.length - 1);
+                text.push(allWords[wordIndex]);
+            }
+            
+            return text.join(' ');
+        }
+        
+        // Check if a position overlaps with existing nodes
+        function checkOverlap(x, y, width, height) {
+            for (const node of nodes) {
+                if (
+                    x < node.x + node.width + padding &&
+                    x + width + padding > node.x &&
+                    y < node.y + node.height + padding &&
+                    y + height + padding > node.y
+                ) {
+                    return true; // Overlap detected
+                }
+            }
+            return false; // No overlap
+        }
+        
+        // Generate a new node
+        function generateNode() {
+            const text = generateRandomText();
+            
+            // Available space for placement
+            const maxX = (window.innerWidth / currentScale) - nodeWidth - 20;
+            const maxY = (window.innerHeight / currentScale) - nodeHeight - 20;
+            
+            // Find a non-overlapping position
+            let x, y;
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            do {
+                x = randomInt(20, maxX);
+                y = randomInt(20, maxY);
+                attempts++;
+            } while (checkOverlap(x, y, nodeWidth, nodeHeight) && attempts < maxAttempts);
+            
+            // If we couldn't find a non-overlapping position
+            if (attempts >= maxAttempts) {
+                // First try to find a spot on the right side
+                let rightmostX = 0;
+                for (const node of nodes) {
+                    rightmostX = Math.max(rightmostX, node.x + node.width);
+                }
+                
+                x = rightmostX + padding;
+                y = randomInt(20, maxY);
+                
+                // If the right spot would be off screen, zoom out
+                if (x + nodeWidth > maxX) {
+                    zoomOut();
+                    // Recalculate after zoom
+                    maxX = (window.innerWidth / currentScale) - nodeWidth - 20;
+                    maxY = (window.innerHeight / currentScale) - nodeHeight - 20;
+                    x = Math.min(x, maxX - nodeWidth);
+                }
+            }
+            
+            const node = {
+                id: nodes.length,
+                x: x,
+                y: y,
+                width: nodeWidth,
+                height: nodeHeight,
+                text: text
+            };
+            
+            nodes.push(node);
+            return node;
+        }
+        
+        // Generate connections between nodes
+        function generateConnections() {
+            connections = [];
+            
+            // Ensure each node has at least one outgoing connection
+            for (let i = 0; i < nodes.length; i++) {
+                if (i < nodes.length - 1) {
+                    const targetIndex = randomInt(i + 1, nodes.length - 1);
+                    connections.push({
+                        source: i,
+                        target: targetIndex
+                    });
+                    
+                    // Add some additional random connections
+                    if (Math.random() > 0.5 && i < nodes.length - 2) {
+                        let secondTarget;
+                        do {
+                            secondTarget = randomInt(i + 1, nodes.length - 1);
+                        } while (secondTarget === targetIndex);
+                        
+                        connections.push({
+                            source: i,
+                            target: secondTarget
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Draw an arrow between two nodes
+        function drawArrow(sourceNode, targetNode, shared = false) {
+            let startX, startY, endX, endY;
+            
+            if (shared) {
+                // For shared word connections, calculate edge-to-edge points
+                // First get center points
+                const sourceNodeCenterX = sourceNode.x + sourceNode.width / 2;
+                const sourceNodeCenterY = sourceNode.y + sourceNode.height / 2;
+                const targetNodeCenterX = targetNode.x + targetNode.width / 2;
+                const targetNodeCenterY = targetNode.y + targetNode.height / 2;
+                
+                // Calculate direction vector
+                const dx = targetNodeCenterX - sourceNodeCenterX;
+                const dy = targetNodeCenterY - sourceNodeCenterY;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const unitDx = dx / length;
+                const unitDy = dy / length;
+                
+                // Calculate intersection points with rectangles
+                // Source node intersection
+                if (Math.abs(unitDx) > Math.abs(unitDy)) {
+                    // Horizontal edge intersection
+                    if (unitDx > 0) {
+                        startX = sourceNode.x + sourceNode.width;
+                    } else {
+                        startX = sourceNode.x;
+                    }
+                    startY = sourceNodeCenterY + unitDy * Math.abs((startX - sourceNodeCenterX) / unitDx);
+                } else {
+                    // Vertical edge intersection
+                    if (unitDy > 0) {
+                        startY = sourceNode.y + sourceNode.height;
+                    } else {
+                        startY = sourceNode.y;
+                    }
+                    startX = sourceNodeCenterX + unitDx * Math.abs((startY - sourceNodeCenterY) / unitDy);
+                }
+                
+                // Target node intersection
+                if (Math.abs(unitDx) > Math.abs(unitDy)) {
+                    // Horizontal edge intersection
+                    if (unitDx > 0) {
+                        endX = targetNode.x;
+                    } else {
+                        endX = targetNode.x + targetNode.width;
+                    }
+                    endY = targetNodeCenterY - unitDy * Math.abs((endX - targetNodeCenterX) / unitDx);
+                } else {
+                    // Vertical edge intersection
+                    if (unitDy > 0) {
+                        endY = targetNode.y;
+                    } else {
+                        endY = targetNode.y + targetNode.height;
+                    }
+                    endX = targetNodeCenterX - unitDx * Math.abs((endY - targetNodeCenterY) / unitDy);
+                }
+            } else {
+                // For normal connections, connect bottom to top
+                startX = sourceNode.x + sourceNode.width / 2;
+                startY = sourceNode.y + sourceNode.height;
+                endX = targetNode.x + targetNode.width / 2;
+                endY = targetNode.y;
+            }
+            
+            // Create path for the arrow
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            if (shared) {
+                // Curved path for shared connections
+                const midX = (startX + endX) / 2;
+                const midY = (startY + endY) / 2;
+                
+                // Add some curve to the line to avoid straight lines
+                const curveFactor = 30;
+                const dx = endX - startX;
+                const dy = endY - startY;
+                const normLength = Math.sqrt(dx * dx + dy * dy);
+                const offX = -dy * curveFactor / normLength;
+                const offY = dx * curveFactor / normLength;
+                
+                // Create curved path
+                const d = `M ${startX},${startY} Q ${midX + offX},${midY + offY} ${endX},${endY}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'arrow-shared');
+                path.setAttribute('marker-end', 'url(#arrowhead-shared)');
+            } else {
+                // S-curve for normal connections
+                const controlPointX1 = startX;
+                const controlPointY1 = startY + (endY - startY) / 3;
+                
+                const controlPointX2 = endX;
+                const controlPointY2 = endY - (endY - startY) / 3;
+                
+                // Create curved path
+                const d = `M ${startX},${startY} C ${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endX},${endY}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'arrow');
+                path.setAttribute('marker-end', 'url(#arrowhead)');
+            }
+            
+            return path;
+        }
+        
+        // Draw a node with text
+        function drawNode(node) {
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', 'node');
+            
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', node.x);
+            rect.setAttribute('y', node.y);
+            rect.setAttribute('width', node.width);
+            rect.setAttribute('height', node.height);
+            rect.setAttribute('rx', '5');
+            rect.setAttribute('ry', '5');
+            rect.setAttribute('fill', 'white');
+            
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', node.x + node.width / 2);
+            text.setAttribute('y', node.y + node.height / 2);
+            
+            // Wrap text to prevent overflow
+            const words = node.text.split(' ');
+            let line = '';
+            let lines = [];
+            const maxCharsPerLine = Math.floor(node.width / 8);
+            
+            // Create lines that fit within the width
+            for (const word of words) {
+                const testLine = line + (line ? ' ' : '') + word;
+                if (testLine.length > maxCharsPerLine && line !== '') {
+                    lines.push(line);
+                    line = word;
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line) {
+                lines.push(line);
+            }
+            
+            // Limit to 3 lines max to prevent vertical overflow
+            if (lines.length > 3) {
+                lines = lines.slice(0, 3);
+                lines[2] = lines[2].substring(0, maxCharsPerLine - 3) + '...';
+            }
+            
+            // Calculate vertical position
+            const lineHeight = 18;
+            const startY = node.y + node.height/2 - ((lines.length - 1) * lineHeight)/2;
+            
+            // Add each line as a tspan
+            lines.forEach((lineText, i) => {
+                const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                tspan.setAttribute('x', node.x + node.width / 2);
+                tspan.setAttribute('y', startY + i * lineHeight);
+                tspan.textContent = lineText;
+                text.appendChild(tspan);
+            });
+            
+            group.appendChild(rect);
+            group.appendChild(text);
+            return group;
+        }
+        
+        // Update button labels with random synonyms
+        function updateButtonLabels() {
+            const generateBtn = document.getElementById('generate');
+            const addNodeBtn = document.getElementById('add-node');
+            const downloadBtn = document.getElementById('download');
+            
+            generateBtn.textContent = visualizeLabels[randomInt(0, visualizeLabels.length - 1)];
+            addNodeBtn.textContent = complicateLabels[randomInt(0, complicateLabels.length - 1)];
+            downloadBtn.textContent = rememberLabels[randomInt(0, rememberLabels.length - 1)];
+        }
+        
+        // Generate the entire flowchart
+        function generateFlowchart() {
+            // Reset zoom
+            currentScale = 1.0;
+            
+            // Clear existing content
+            while (svg.firstChild) {
+                svg.removeChild(svg.firstChild);
+            }
+            
+            nodes = [];
+            connections = [];
+            
+            // Create main group for zooming
+            mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            mainGroup.setAttribute('transform', `scale(${currentScale})`);
+            svg.appendChild(mainGroup);
+            
+            // Define arrow markers
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            
+            // Regular arrow marker
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', 'arrowhead');
+            marker.setAttribute('markerWidth', '10');
+            marker.setAttribute('markerHeight', '7');
+            marker.setAttribute('refX', '10');
+            marker.setAttribute('refY', '3.5');
+            marker.setAttribute('orient', 'auto');
+            
+            const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+            polygon.setAttribute('class', 'arrow-head');
+            
+            marker.appendChild(polygon);
+            defs.appendChild(marker);
+            
+            // Red arrow marker for shared words
+            const sharedMarker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            sharedMarker.setAttribute('id', 'arrowhead-shared');
+            sharedMarker.setAttribute('markerWidth', '10');
+            sharedMarker.setAttribute('markerHeight', '7');
+            sharedMarker.setAttribute('refX', '10');
+            sharedMarker.setAttribute('refY', '3.5');
+            sharedMarker.setAttribute('orient', 'auto');
+            
+            const sharedPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            sharedPolygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+            sharedPolygon.setAttribute('class', 'arrow-head-shared');
+            
+            sharedMarker.appendChild(sharedPolygon);
+            defs.appendChild(sharedMarker);
+            
+            mainGroup.appendChild(defs);
+            
+            // Generate nodes
+            const nodeCount = randomInt(4, 8);
+            for (let i = 0; i < nodeCount; i++) {
+                generateNode();
+            }
+            
+            // Generate connections
+            generateConnections();
+            
+            // Draw connections first (so they appear behind nodes)
+            for (const connection of connections) {
+                const sourceNode = nodes[connection.source];
+                const targetNode = nodes[connection.target];
+                
+                const arrow = drawArrow(sourceNode, targetNode);
+                mainGroup.appendChild(arrow);
+            }
+            
+            // Add connections for nodes with shared words
+            addSharedWordConnections();
+            
+            // Draw nodes
+            for (const node of nodes) {
+                const nodeElement = drawNode(node);
+                mainGroup.appendChild(nodeElement);
+            }
+            
+            // Update button labels with new random synonyms
+            updateButtonLabels();
+        }
+        
+        // Check if two nodes share any words
+        function nodesShareWords(node1, node2) {
+            // Split the text of both nodes into arrays of words
+            const words1 = node1.text.toLowerCase().split(' ');
+            const words2 = node2.text.toLowerCase().split(' ');
+            
+            // Check if any word from the first node is present in the second node
+            for (const word of words1) {
+                if (word && words2.includes(word)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Check if a connection already exists between two nodes
+        function connectionExists(sourceIndex, targetIndex) {
+            return connections.some(conn => 
+                (conn.source === sourceIndex && conn.target === targetIndex) || 
+                (conn.source === targetIndex && conn.target === sourceIndex)
+            );
+        }
+        
+        // Add connections between nodes that share words
+        function addSharedWordConnections() {
+            // Only add one red arrow total
+            let addedRedArrow = false;
+            
+            // Check all pairs of nodes
+            for (let i = 0; i < nodes.length && !addedRedArrow; i++) {
+                for (let j = i + 1; j < nodes.length && !addedRedArrow; j++) {
+                    // If the nodes share words and aren't already connected
+                    if (nodesShareWords(nodes[i], nodes[j]) && !connectionExists(i, j)) {
+                        // Create a connection from i to j
+                        const sourceNode = nodes[i];
+                        const targetNode = nodes[j];
+                        
+                        // Draw a red arrow
+                        const arrow = drawArrow(sourceNode, targetNode, true);
+                        mainGroup.appendChild(arrow);
+                        
+                        // Mark that we've added a red arrow
+                        addedRedArrow = true;
+                    }
+                }
+            }
+        }
+        
+        // Add a single new node and connect it
+        function addNode() {
+            if (nodes.length === 0) {
+                generateFlowchart();
+                return;
+            }
+            
+            const newNode = generateNode();
+            
+            // Connect from a random existing node
+            const sourceNodeIndex = randomInt(0, nodes.length - 2);
+            connections.push({
+                source: sourceNodeIndex,
+                target: newNode.id
+            });
+            
+            // Draw the new connection
+            const sourceNode = nodes[sourceNodeIndex];
+            const arrow = drawArrow(sourceNode, newNode);
+            mainGroup.appendChild(arrow);
+            
+            // Draw the new node
+            const nodeElement = drawNode(newNode);
+            mainGroup.appendChild(nodeElement);
+            
+            // Check for shared words with existing nodes
+            let addedRedArrow = false;
+            for (let i = 0; i < nodes.length - 1 && !addedRedArrow; i++) {
+                if (nodesShareWords(nodes[i], newNode) && !connectionExists(i, newNode.id)) {
+                    const arrow = drawArrow(nodes[i], newNode, true);
+                    mainGroup.appendChild(arrow);
+                    addedRedArrow = true;
+                }
+            }
+        }
+        
+        // Handle window resize
+        function handleResize() {
+            svg.setAttribute('width', window.innerWidth);
+            svg.setAttribute('height', window.innerHeight);
+        }
+        
+        // Zoom out the view to accommodate more nodes
+        function zoomOut() {
+            // Reduce scale by 10%
+            currentScale = currentScale * 0.9;
+            
+            // Update transformation
+            mainGroup.setAttribute('transform', `scale(${currentScale})`);
+            
+            console.log("Zooming out to scale:", currentScale);
+        }
+        
+        // Initialize the flowchart
+        function init() {
+            svg = document.getElementById('flowchart');
+            
+            // Set initial dimensions
+            svg.setAttribute('width', window.innerWidth);
+            svg.setAttribute('height', window.innerHeight);
+            
+            // Initialize event listeners
+            document.getElementById('generate').addEventListener('click', generateFlowchart);
+            document.getElementById('add-node').addEventListener('click', addNode);
+            document.getElementById('download').addEventListener('click', downloadChart);
+            window.addEventListener('resize', handleResize);
+            
+            // Generate initial flowchart
+            generateFlowchart();
+            
+            // Set initial button labels
+            updateButtonLabels();
+        }
+        
+        // Download the SVG chart
+        function downloadChart() {
+            // Get the SVG element
+            const svgElement = document.getElementById('flowchart');
+            
+            // Clone the SVG to avoid modifying the displayed one
+            const svgClone = svgElement.cloneNode(true);
+            
+            // Make sure we have all the necessary attributes for a standalone SVG
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('version', '1.1');
+            
+            // Convert SVG to a string
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            
+            // Create a Blob with the SVG data
+            const blob = new Blob([svgData], {type: 'image/svg+xml'});
+            
+            // Create a URL for the Blob
+            const url = URL.createObjectURL(blob);
+            
+            // Create a download link
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'flowchart.svg';
+            
+            // Append to the body, click the link, then remove it
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up the URL object
+            URL.revokeObjectURL(url);
+        }
+        
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', init);
+    })();
+    </script>
+</body>
+</html>
