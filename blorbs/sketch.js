@@ -1,298 +1,230 @@
-
-// P5.js setup
-let width, height;
-let pixels = [];
-let mouseX = 0, mouseY = 0;
-let blobs = [];
-let numBlobs = 7; // Number of metaballs
-let isFullscreen = false;
-let pixelSkip = 2; // Higher = faster performance, lower = better quality
-
-// Helper functions for p5.js equivalents
-function randomRange(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function constrain(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function color(val) {
-  return {
-    r: val,
-    g: val,
-    b: val,
-    a: 255
-  };
-}
-
-function red(c) {
-  return c.r;
-}
-
-class Blob {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.r = randomRange(100, 400);  // Much larger radius
-    this.xSpeed = randomRange(-1, 1);
-    this.ySpeed = randomRange(-1, 1);
-  }
-
-  update() {
-    this.x += this.xSpeed;
-    this.y += this.ySpeed;
-    
-    // Add slight randomness to movement
-    this.xSpeed += randomRange(-0.05, 0.05);
-    this.ySpeed += randomRange(-0.05, 0.05);
-    
-    // Limit speed
-    this.xSpeed = constrain(this.xSpeed, -2, 2);
-    this.ySpeed = constrain(this.ySpeed, -2, 2);
-    
-    // Bounce off edges
-    if (this.x > width || this.x < 0) {
-      this.xSpeed *= -1;
-    }
-    if (this.y > height || this.y < 0) {
-      this.ySpeed *= -1;
-    }
-  }
-}
-
-function createCanvas(w, h) {
-  width = w;
-  height = h;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  document.body.appendChild(canvas);
-  return canvas.getContext('2d');
-}
-
-function pixelDensity(val) {
-  // This would set pixel density in p5.js
-  // Not needed for basic implementation
-}
-
-function createButton(text) {
-  const button = document.createElement('button');
-  button.textContent = text;
-  document.body.appendChild(button);
-  
-  return {
-    position: function(x, y) {
-      button.style.position = 'absolute';
-      button.style.left = x + 'px';
-      button.style.top = y + 'px';
-    },
-    mousePressed: function(callback) {
-      button.addEventListener('click', callback);
-    },
-    style: function(property, value) {
-      button.style[property] = value;
-    },
-    mouseOver: function(callback) {
-      button.addEventListener('mouseover', callback);
-    },
-    mouseOut: function(callback) {
-      button.addEventListener('mouseout', callback);
-    }
-  };
-}
-
-function background(val) {
-  ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
-  ctx.fillRect(0, 0, width, height);
-}
-
-function loadPixels() {
-  // Get the pixel data from the canvas
-  imageData = ctx.getImageData(0, 0, width, height);
-  pixels = imageData.data;
-}
-
-function updatePixels() {
-  // Put the modified pixels back on the canvas
-  ctx.putImageData(imageData, 0, 0);
-}
-
-function fullscreen(val) {
-  if (val) {
-    // Request fullscreen
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    } else if (document.documentElement.webkitRequestFullscreen) {
-      document.documentElement.webkitRequestFullscreen();
-    } else if (document.documentElement.msRequestFullscreen) {
-      document.documentElement.msRequestFullscreen();
-    }
-    return true;
-  } else {
-    // Exit fullscreen
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-    return false;
-  }
-}
-
-function resizeCanvas(w, h) {
-  width = w;
-  height = h;
-  const canvas = ctx.canvas;
-  canvas.width = width;
-  canvas.height = height;
-}
-
-function noCursor() {
-  document.body.style.cursor = 'none';
-}
-
-function cursor() {
-  document.body.style.cursor = 'default';
-}
-
-// Keep track of mouse position
-document.addEventListener('mousemove', function(event) {
-  mouseX = event.clientX;
-  mouseY = event.clientY;
-});
-
-// Handle keypresses
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Escape' && isFullscreen) {
-    toggleFullscreen();
-  }
-});
-
-// Handle clicks
-document.addEventListener('click', function(event) {
-  mousePressed();
-});
-
-// Handle window resize
-window.addEventListener('resize', function() {
-  windowResized();
-});
-
-let ctx;
-let imageData;
-
-function setup() {
-  ctx = createCanvas(window.innerWidth, window.innerHeight);
-  pixelDensity(1); // Important for performance
-  
-  // Create fewer, larger blobs at random positions
-  numBlobs = 5;  // Fewer blobs for better visibility
-  for (let i = 0; i < numBlobs; i++) {
-    blobs.push(new Blob(randomRange(0, width), randomRange(0, height)));
-  }
-  
-  // Create fullscreen button
-  let fullscreenButton = createButton('Toggle Fullscreen');
-  fullscreenButton.position(10, 10);
-  fullscreenButton.mousePressed(toggleFullscreen);
-  fullscreenButton.style('z-index', '100');
-  
-  // Hide cursor after a few seconds of inactivity
-  setTimeout(() => {
-    fullscreenButton.style('opacity', '0.2');
-  }, 3000);
-  
-  fullscreenButton.mouseOver(() => {
-    fullscreenButton.style('opacity', '1');
-  });
-  
-  fullscreenButton.mouseOut(() => {
-    fullscreenButton.style('opacity', '0.2');
-  });
-}
-
-function draw() {
-  background(20); // Dark gray background
-  
-  // Update blob positions
-  for (let i = 0; i < blobs.length; i++) {
-    blobs[i].update();
-  }
-  
-  // Render metaballs with pixel manipulation
-  loadPixels();
-  
-  // Skip pixels for performance (adjust pixelSkip for quality vs speed)
-  for (let x = 0; x < width; x += pixelSkip) {
-    for (let y = 0; y < height; y += pixelSkip) {
-      let sum = 0;
-      
-      // Calculate metaball field value at this point
-      for (let i = 0; i < blobs.length; i++) {
-        let xdif = x - blobs[i].x;
-        let ydif = y - blobs[i].y;
-        // Using sqrt is expensive - we can use distance squared for better performance
-        let d = Math.sqrt((xdif * xdif) + (ydif * ydif));
-        sum += 40 * blobs[i].r / d;  // Increased field strength for more interaction
-      }
-      
-      // Constrain values to avoid extremely bright spots
-      sum = constrain(sum, 0, 255);
-      
-      // Convert to grayscale and set each block of pixels
-      let c = color(sum);
-      
-      // Fill block of pixels for the skipped resolution
-      for (let px = 0; px < pixelSkip; px++) {
-        for (let py = 0; py < pixelSkip; py++) {
-          if (x + px < width && y + py < height) {
-            let idx = 4 * ((y + py) * width + (x + px));
-            pixels[idx] = red(c);
-            pixels[idx + 1] = red(c);
-            pixels[idx + 2] = red(c);
-            pixels[idx + 3] = 255;
-          }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullscreen Blobs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-    }
-  }
-  
-  updatePixels();
-}
-
-// Toggle fullscreen mode
-function toggleFullscreen() {
-  isFullscreen = !isFullscreen;
-  
-  if (isFullscreen) {
-    let fs = fullscreen(true);
-    resizeCanvas(window.innerWidth, window.innerHeight);
-    noCursor();
-  } else {
-    fullscreen(false);
-    resizeCanvas(window.innerWidth, window.innerHeight);
-    cursor();
-  }
-}
-
-// Handle window resize
-function windowResized() {
-  resizeCanvas(window.innerWidth, window.innerHeight);
-}
-
-// Add blobs on mouse click
-function mousePressed() {
-  if (mouseY < height - 50) { // Avoid adding blobs when clicking on UI elements
-    blobs.push(new Blob(mouseX, mouseY));
-    if (blobs.length > 8) { // Limit total blobs for better interaction and performance
-      blobs.shift();
-    }
-  }
-}
-
-// Initialize and start the animation
-setup();
-setInterval(draw, 1000 / 60); // 60 FPS
+        
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #000;
+            cursor: none;
+        }
+        
+        .container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+        
+        video::-webkit-media-controls {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-panel {
+            display: none !important;
+        }
+        
+        .blob-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            mix-blend-mode: normal;
+            filter: contrast(2);
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        
+        .blob-canvas.layer2 {
+            z-index: 3;
+            opacity: 0.6;
+        }
+        
+        body.inverted .blob-canvas {
+            filter: contrast(2) invert(1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <video id="video" autoplay loop muted playsinline>
+            <source src="https://d2w9rnfcy7mm78.cloudfront.net/35681327/original_ba0ae2c5da2e52aebdca7dd1908a2539.mp4" type="video/mp4">
+        </video>
+        
+        <canvas id="blobCanvas1" class="blob-canvas"></canvas>
+        <canvas id="blobCanvas2" class="blob-canvas layer2"></canvas>
+    </div>
+    
+    <script>
+        try {
+            // Random inversion on load
+            if (Math.random() < 0.5) {
+                document.body.classList.add('inverted');
+            }
+            
+            // Ensure video plays
+            const video = document.getElementById('video');
+            video.play().catch(() => {
+                document.addEventListener('click', () => video.play(), { once: true });
+            });
+            
+            // Simple blob renderer using canvas drawing instead of pixel manipulation
+            class SimpleBlobs {
+                constructor(canvasId) {
+                    this.canvas = document.getElementById(canvasId);
+                    this.ctx = this.canvas.getContext('2d');
+                    this.resize();
+                    
+                    this.blobs = [];
+                    this.numBlobs = 4;
+                    
+                    // Create blobs
+                    for (let i = 0; i < this.numBlobs; i++) {
+                        this.blobs.push({
+                            x: Math.random() * this.width,
+                            y: Math.random() * this.height,
+                            r: 100 + Math.random() * 200,
+                            dx: (Math.random() - 0.5) * 2,
+                            dy: (Math.random() - 0.5) * 2,
+                            opacity: 0.3 + Math.random() * 0.4
+                        });
+                    }
+                    
+                    this.animate();
+                }
+                
+                resize() {
+                    this.width = window.innerWidth;
+                    this.height = window.innerHeight;
+                    this.canvas.width = this.width;
+                    this.canvas.height = this.height;
+                }
+                
+                update() {
+                    for (let blob of this.blobs) {
+                        blob.x += blob.dx;
+                        blob.y += blob.dy;
+                        
+                        // Bounce off edges
+                        if (blob.x <= 0 || blob.x >= this.width) blob.dx *= -1;
+                        if (blob.y <= 0 || blob.y >= this.height) blob.dy *= -1;
+                        
+                        // Keep within bounds
+                        blob.x = Math.max(0, Math.min(this.width, blob.x));
+                        blob.y = Math.max(0, Math.min(this.height, blob.y));
+                    }
+                }
+                
+                draw() {
+                    // Clear canvas
+                    this.ctx.clearRect(0, 0, this.width, this.height);
+                    
+                    // Create gradient blobs
+                    for (let blob of this.blobs) {
+                        try {
+                            const gradient = this.ctx.createRadialGradient(
+                                blob.x, blob.y, 0,
+                                blob.x, blob.y, blob.r
+                            );
+                            
+                            gradient.addColorStop(0, `rgba(255, 255, 255, ${blob.opacity})`);
+                            gradient.addColorStop(0.7, `rgba(255, 255, 255, ${blob.opacity * 0.3})`);
+                            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                            
+                            this.ctx.fillStyle = gradient;
+                            this.ctx.fillRect(
+                                blob.x - blob.r, blob.y - blob.r,
+                                blob.r * 2, blob.r * 2
+                            );
+                        } catch (e) {
+                            // Fallback to simple circle if gradient fails
+                            this.ctx.fillStyle = `rgba(255, 255, 255, ${blob.opacity})`;
+                            this.ctx.beginPath();
+                            this.ctx.arc(blob.x, blob.y, blob.r, 0, Math.PI * 2);
+                            this.ctx.fill();
+                        }
+                    }
+                }
+                
+                animate() {
+                    try {
+                        this.update();
+                        this.draw();
+                        requestAnimationFrame(() => this.animate());
+                    } catch (e) {
+                        console.error('Animation error:', e);
+                        // Try again after a delay
+                        setTimeout(() => this.animate(), 100);
+                    }
+                }
+            }
+            
+            // Initialize blob simulations
+            let blob1, blob2;
+            
+            function initBlobs() {
+                try {
+                    blob1 = new SimpleBlobs('blobCanvas1');
+                    blob2 = new SimpleBlobs('blobCanvas2');
+                } catch (e) {
+                    console.error('Failed to initialize blobs:', e);
+                }
+            }
+            
+            // Handle resize
+            function resize() {
+                try {
+                    const container = document.querySelector('.container');
+                    container.style.width = window.innerWidth + 'px';
+                    container.style.height = window.innerHeight + 'px';
+                    
+                    if (blob1) blob1.resize();
+                    if (blob2) blob2.resize();
+                } catch (e) {
+                    console.error('Resize error:', e);
+                }
+            }
+            
+            window.addEventListener('resize', resize);
+            window.addEventListener('orientationchange', resize);
+            
+            // Initialize after DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initBlobs);
+            } else {
+                initBlobs();
+            }
+            
+            resize();
+            
+        } catch (e) {
+            console.error('Script error:', e);
+            // Fallback: just show the video without blobs
+            document.body.style.background = '#000';
+        }
+    </script>
+</body>
+</html>
