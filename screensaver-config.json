@@ -1,18 +1,19 @@
 {
   "urls": [
-   "https://www.slowempty.com/",
-    "https://pjbaldes.github.io/kareAware",
-    "https://pjbaldes.github.io/png_collage",
-    "https://pjbaldes.github.io/spiral",
-    "https://pjbaldes.github.io/pie",
+    "https://www.slowempty.com/",
+    "https://pjbaldes.github.io/kareAware/",
+    "https://pjbaldes.github.io/png_collage/",
+    "https://pjbaldes.github.io/spiral/",
+    "https://pjbaldes.github.io/pie/",
     "https://pjbaldes.github.io/stripeswap",
     "https://pjbaldes.github.io/wordsearch",
     "https://pjbaldes.github.io/video/bwWipe.html",
-     "https://pjbaldes.github.io/video/colorWipe.html",
-     "https://pjbaldes.github.io/video/quadrantColor.html",
-     "https://pjbaldes.github.io/linearinterpolation",
-    "https://pjbaldes.github.io/tree/main/hitomezashi",
-    "https://pjbaldes.github.io/tree/main/shaperotater"
+    "https://pjbaldes.github.io/video/colorWipe.html",
+    "https://pjbaldes.github.io/video/quadrantColor.html",
+    "https://pjbaldes.github.io/linearinterpolation",
+    "https://pjbaldes.github.io/hitomezashi",
+    "https://pjbaldes.github.io/shaperotater",
+     "https://pjbaldes.github.io/lovinit"
   ],
   "refreshInterval": 3600,
   "rotateInterval": 300
