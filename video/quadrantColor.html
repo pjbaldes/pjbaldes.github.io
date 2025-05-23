@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perlin Noise Quadrants</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Perlin Noise implementation
+        // Based on the improved noise algorithm by Ken Perlin
+        class PerlinNoise {
+            constructor() {
+                this.permutation = [];
+                for (let i = 0; i < 256; i++) {
+                    this.permutation[i] = Math.floor(Math.random() * 256);
+                }
+                // Duplicate to avoid buffer overflow
+                for (let i = 0; i < 256; i++) {
+                    this.permutation[i + 256] = this.permutation[i];
+                }
+            }
+
+            fade(t) {
+                return t * t * t * (t * (t * 6 - 15) + 10);
+            }
+
+            lerp(a, b, t) {
+                return a + t * (b - a);
+            }
+
+            grad(hash, x, y, z) {
+                const h = hash & 15;
+                const u = h < 8 ? x : y;
+                const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+                return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+            }
+
+            noise(x, y = 0, z = 0) {
+                const X = Math.floor(x) & 255;
+                const Y = Math.floor(y) & 255;
+                const Z = Math.floor(z) & 255;
+
+                x -= Math.floor(x);
+                y -= Math.floor(y);
+                z -= Math.floor(z);
+
+                const u = this.fade(x);
+                const v = this.fade(y);
+                const w = this.fade(z);
+
+                const A = this.permutation[X] + Y;
+                const AA = this.permutation[A] + Z;
+                const AB = this.permutation[A + 1] + Z;
+                const B = this.permutation[X + 1] + Y;
+                const BA = this.permutation[B] + Z;
+                const BB = this.permutation[B + 1] + Z;
+
+                const result = this.lerp(
+                    this.lerp(
+                        this.lerp(this.grad(this.permutation[AA], x, y, z),
+                            this.grad(this.permutation[BA], x - 1, y, z),
+                            u),
+                        this.lerp(this.grad(this.permutation[AB], x, y - 1, z),
+                            this.grad(this.permutation[BB], x - 1, y - 1, z),
+                            u),
+                        v),
+                    this.lerp(
+                        this.lerp(this.grad(this.permutation[AA + 1], x, y, z - 1),
+                            this.grad(this.permutation[BA + 1], x - 1, y, z - 1),
+                            u),
+                        this.lerp(this.grad(this.permutation[AB + 1], x, y - 1, z - 1),
+                            this.grad(this.permutation[BB + 1], x - 1, y - 1, z - 1),
+                            u),
+                        v),
+                    w
+                );
+
+                // Return a value between 0 and 1
+                return (result + 1) / 2;
+            }
+        }
+
+        // Helper to create an RGB color string
+        function rgbColor(r, g, b) {
+            return `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+        }
+
+        // Helper to create a random color
+        function randomColor() {
+            return {
+                r: Math.floor(Math.random() * 256),
+                g: Math.floor(Math.random() * 256),
+                b: Math.floor(Math.random() * 256)
+            };
+        }
+
+        // Helper to transition between colors
+        function lerpColor(color1, color2, amount) {
+            return {
+                r: color1.r + (color2.r - color1.r) * amount,
+                g: color1.g + (color2.g - color1.g) * amount,
+                b: color1.b + (color2.b - color1.b) * amount
+            };
+        }
+
+        // Main application
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Initialize canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        // Resize the canvas initially and on window resize
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Initialize Perlin noise
+        const perlin = new PerlinNoise();
+        
+        // Point position and noise parameters
+        let pointX = canvas.width / 2;
+        let pointY = canvas.height / 2;
+        let noiseOffsetX = 0;
+        let noiseOffsetY = 1000; // Starting with different values
+        const noiseStepX = 0.003;
+        const noiseStepY = 0.005; // Different step value for Y
+        
+        // Use different dimensions of the noise field
+        let noiseZX = 500; // Z dimension for X coordinate
+        let noiseZY = 750; // Z dimension for Y coordinate
+        
+        // Colors for quadrants
+        let colors = Array(4).fill().map(() => randomColor());
+        let targetColors = colors.map(color => ({...color})); // Clone colors
+        const colorTransitionSpeed = 0.05;
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Clear canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update noise offsets with different step sizes
+            noiseOffsetX += noiseStepX;
+            noiseOffsetY += noiseStepY;
+            
+            // Use additional dimensions of the noise field for more variation
+            noiseZX += noiseStepX * 0.7;
+            noiseZY += noiseStepY * 0.7;
+            
+            // Calculate new position based on Perlin noise using different Z values
+            // Map noise to screen coordinates with expanded range to go further offscreen
+            const noiseValX = perlin.noise(noiseOffsetX, noiseZX, 0) * canvas.width * 3 - canvas.width;
+            const noiseValY = perlin.noise(noiseOffsetY, 0, noiseZY) * canvas.height * 3 - canvas.height;
+            
+            // Store original values for boundary checking
+            const originalX = noiseValX;
+            const originalY = noiseValY;
+            
+            // Update point position, constrained to canvas
+            pointX = Math.max(0, Math.min(canvas.width, noiseValX));
+            pointY = Math.max(0, Math.min(canvas.height, noiseValY));
+            
+            // Check if original point went beyond bounds
+            let colorsToChange = [];
+            
+            if (originalX < 0) {
+                // x < 0: top left and bottom left get new colors
+                colorsToChange.push(0, 2);
+            } else if (originalX > canvas.width) {
+                // x > width: top right and bottom right get new colors
+                colorsToChange.push(1, 3);
+            }
+            
+            if (originalY < 0) {
+                // y < 0: top left and top right get new colors
+                colorsToChange.push(0, 1);
+            } else if (originalY > canvas.height) {
+                // y > height: bottom left and bottom right get new colors
+                colorsToChange.push(2, 3);
+            }
+            
+            // Update target colors for quadrants that went beyond window
+            if (colorsToChange.length > 0) {
+                // Get unique quadrants that need new colors
+                const uniqueQuadrants = [...new Set(colorsToChange)];
+                for (const quadrant of uniqueQuadrants) {
+                    targetColors[quadrant] = randomColor();
+                }
+            }
+            
+            // Gradually transition current colors toward target colors
+            for (let i = 0; i < 4; i++) {
+                colors[i] = lerpColor(colors[i], targetColors[i], colorTransitionSpeed);
+            }
+            
+            // Draw the quadrants
+            // Top left (0)
+            ctx.fillStyle = rgbColor(colors[0].r, colors[0].g, colors[0].b);
+            ctx.fillRect(0, 0, pointX, pointY);
+            
+            // Top right (1)
+            ctx.fillStyle = rgbColor(colors[1].r, colors[1].g, colors[1].b);
+            ctx.fillRect(pointX, 0, canvas.width - pointX, pointY);
+            
+            // Bottom left (2)
+            ctx.fillStyle = rgbColor(colors[2].r, colors[2].g, colors[2].b);
+            ctx.fillRect(0, pointY, pointX, canvas.height - pointY);
+            
+            // Bottom right (3)
+            ctx.fillStyle = rgbColor(colors[3].r, colors[3].g, colors[3].b);
+            ctx.fillRect(pointX, pointY, canvas.width - pointX, canvas.height - pointY);
+        }
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perlin Noise Quadrants</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Perlin Noise implementation
+        // Based on the improved noise algorithm by Ken Perlin
+        class PerlinNoise {
+            constructor() {
+                this.permutation = [];
+                for (let i = 0; i < 256; i++) {
+                    this.permutation[i] = Math.floor(Math.random() * 256);
+                }
+                // Duplicate to avoid buffer overflow
+                for (let i = 0; i < 256; i++) {
+                    this.permutation[i + 256] = this.permutation[i];
+                }
+            }
+
+            fade(t) {
+                return t * t * t * (t * (t * 6 - 15) + 10);
+            }
+
+            lerp(a, b, t) {
+                return a + t * (b - a);
+            }
+
+            grad(hash, x, y, z) {
+                const h = hash & 15;
+                const u = h < 8 ? x : y;
+                const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+                return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+            }
+
+            noise(x, y = 0, z = 0) {
+                const X = Math.floor(x) & 255;
+                const Y = Math.floor(y) & 255;
+                const Z = Math.floor(z) & 255;
+
+                x -= Math.floor(x);
+                y -= Math.floor(y);
+                z -= Math.floor(z);
+
+                const u = this.fade(x);
+                const v = this.fade(y);
+                const w = this.fade(z);
+
+                const A = this.permutation[X] + Y;
+                const AA = this.permutation[A] + Z;
+                const AB = this.permutation[A + 1] + Z;
+                const B = this.permutation[X + 1] + Y;
+                const BA = this.permutation[B] + Z;
+                const BB = this.permutation[B + 1] + Z;
+
+                const result = this.lerp(
+                    this.lerp(
+                        this.lerp(this.grad(this.permutation[AA], x, y, z),
+                            this.grad(this.permutation[BA], x - 1, y, z),
+                            u),
+                        this.lerp(this.grad(this.permutation[AB], x, y - 1, z),
+                            this.grad(this.permutation[BB], x - 1, y - 1, z),
+                            u),
+                        v),
+                    this.lerp(
+                        this.lerp(this.grad(this.permutation[AA + 1], x, y, z - 1),
+                            this.grad(this.permutation[BA + 1], x - 1, y, z - 1),
+                            u),
+                        this.lerp(this.grad(this.permutation[AB + 1], x, y - 1, z - 1),
+                            this.grad(this.permutation[BB + 1], x - 1, y - 1, z - 1),
+                            u),
+                        v),
+                    w
+                );
+
+                // Return a value between 0 and 1
+                return (result + 1) / 2;
+            }
+        }
+
+        // Helper to create an RGB color string
+        function rgbColor(r, g, b) {
+            return `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+        }
+
+        // Helper to create a random color
+        function randomColor() {
+            return {
+                r: Math.floor(Math.random() * 256),
+                g: Math.floor(Math.random() * 256),
+                b: Math.floor(Math.random() * 256)
+            };
+        }
+
+        // Helper to transition between colors
+        function lerpColor(color1, color2, amount) {
+            return {
+                r: color1.r + (color2.r - color1.r) * amount,
+                g: color1.g + (color2.g - color1.g) * amount,
+                b: color1.b + (color2.b - color1.b) * amount
+            };
+        }
+
+        // Main application
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Initialize canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        // Resize the canvas initially and on window resize
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Initialize Perlin noise
+        const perlin = new PerlinNoise();
+        
+        // Point position and noise parameters
+        let pointX = canvas.width / 2;
+        let pointY = canvas.height / 2;
+        let noiseOffsetX = 0;
+        let noiseOffsetY = 1000; // Starting with different values
+        const noiseStepX = 0.003;
+        const noiseStepY = 0.005; // Different step value for Y
+        
+        // Use different dimensions of the noise field
+        let noiseZX = 500; // Z dimension for X coordinate
+        let noiseZY = 750; // Z dimension for Y coordinate
+        
+        // Colors for quadrants
+        let colors = Array(4).fill().map(() => randomColor());
+        let targetColors = colors.map(color => ({...color})); // Clone colors
+        const colorTransitionSpeed = 0.05;
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Clear canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update noise offsets with different step sizes
+            noiseOffsetX += noiseStepX;
+            noiseOffsetY += noiseStepY;
+            
+            // Use additional dimensions of the noise field for more variation
+            noiseZX += noiseStepX * 0.7;
+            noiseZY += noiseStepY * 0.7;
+            
+            // Calculate new position based on Perlin noise using different Z values
+            // Map noise to screen coordinates with expanded range to go further offscreen
+            const noiseValX = perlin.noise(noiseOffsetX, noiseZX, 0) * canvas.width * 3 - canvas.width;
+            const noiseValY = perlin.noise(noiseOffsetY, 0, noiseZY) * canvas.height * 3 - canvas.height;
+            
+            // Store original values for boundary checking
+            const originalX = noiseValX;
+            const originalY = noiseValY;
+            
+            // Update point position, constrained to canvas
+            pointX = Math.max(0, Math.min(canvas.width, noiseValX));
+            pointY = Math.max(0, Math.min(canvas.height, noiseValY));
+            
+            // Check if original point went beyond bounds
+            let colorsToChange = [];
+            
+            if (originalX < 0) {
+                // x < 0: top left and bottom left get new colors
+                colorsToChange.push(0, 2);
+            } else if (originalX > canvas.width) {
+                // x > width: top right and bottom right get new colors
+                colorsToChange.push(1, 3);
+            }
+            
+            if (originalY < 0) {
+                // y < 0: top left and top right get new colors
+                colorsToChange.push(0, 1);
+            } else if (originalY > canvas.height) {
+                // y > height: bottom left and bottom right get new colors
+                colorsToChange.push(2, 3);
+            }
+            
+            // Update target colors for quadrants that went beyond window
+            if (colorsToChange.length > 0) {
+                // Get unique quadrants that need new colors
+                const uniqueQuadrants = [...new Set(colorsToChange)];
+                for (const quadrant of uniqueQuadrants) {
+                    targetColors[quadrant] = randomColor();
+                }
+            }
+            
+            // Gradually transition current colors toward target colors
+            for (let i = 0; i < 4; i++) {
+                colors[i] = lerpColor(colors[i], targetColors[i], colorTransitionSpeed);
+            }
+            
+            // Draw the quadrants
+            // Top left (0)
+            ctx.fillStyle = rgbColor(colors[0].r, colors[0].g, colors[0].b);
+            ctx.fillRect(0, 0, pointX, pointY);
+            
+            // Top right (1)
+            ctx.fillStyle = rgbColor(colors[1].r, colors[1].g, colors[1].b);
+            ctx.fillRect(pointX, 0, canvas.width - pointX, pointY);
+            
+            // Bottom left (2)
+            ctx.fillStyle = rgbColor(colors[2].r, colors[2].g, colors[2].b);
+            ctx.fillRect(0, pointY, pointX, canvas.height - pointY);
+            
+            // Bottom right (3)
+            ctx.fillStyle = rgbColor(colors[3].r, colors[3].g, colors[3].b);
+            ctx.fillRect(pointX, pointY, canvas.width - pointX, canvas.height - pointY);
+        }
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
