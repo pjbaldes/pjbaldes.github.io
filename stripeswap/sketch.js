@@ -8,7 +8,7 @@ let isFullscreen = false;
 let noiseOffsetThickness = 0; // Noise offset for thickness variation
 let noiseOffsetSpacing = 1000; // Different starting offset for spacing variation
 let seedValue; // Seed for the noise function
-let isHorizontal = true; // Direction flag - horizontal by default
+let isHorizontal; // Direction flag - will be randomly chosen in setup
 let lastMouseMoveTime; // To track when the mouse was last moved
 let buttonOpacity = 255; // Controls the visibility of buttons
 
@@ -20,11 +20,15 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   frameRate(30);
   
+  // Randomly choose orientation (horizontal or vertical)
+  isHorizontal = random() > 0.5;
+  
   // Generate random seed value for the noise function
   seedValue = random(100000);
   randomSeed(seedValue); // Set the random seed
   noiseSeed(seedValue); // Set the noise seed with the same value
   console.log("Pattern seed:", seedValue); // Log the seed for reference
+  console.log("Random orientation:", isHorizontal ? "Horizontal" : "Vertical"); // Log the chosen orientation
   
   // Create UI buttons
   fsButton = createButton('Fullscreen');
@@ -33,7 +37,7 @@ function setup() {
   fsButton.style('opacity', '1');
   fsButton.style('transition', 'opacity 0.5s ease-in-out');
   
-  directionButton = createButton('Switch to Vertical');
+  directionButton = createButton(isHorizontal ? 'Switch to Vertical' : 'Switch to Horizontal');
   directionButton.position(100, 10);
   directionButton.mousePressed(toggleDirection);
   directionButton.style('opacity', '1');
@@ -211,96 +215,4 @@ function generateNewPattern() {
   // Reset offsets for a fresh start
   noiseOffsetThickness = 0;
   noiseOffsetSpacing = 1000;
-}
-
-// Handle window resizing
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-
-// Toggle fullscreen mode
-function toggleFullscreen() {
-  if (!isFullscreen) {
-    fullscreen(true);
-    isFullscreen = true;
-  } else {
-    fullscreen(false);
-    isFullscreen = false;
-  }
-}
-
-// Handle exiting fullscreen with Escape key
-function keyPressed() {
-  if (keyCode === ESCAPE) {
-    isFullscreen = false;
-  }
-}
-
-// Handle window resizing
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-
-// Toggle fullscreen mode
-function toggleFullscreen() {
-  if (!isFullscreen) {
-    fullscreen(true);
-    isFullscreen = true;
-  } else {
-    fullscreen(false);
-    isFullscreen = false;
-  }
-}
-
-// Handle exiting fullscreen with Escape key
-function keyPressed() {
-  if (keyCode === ESCAPE) {
-    isFullscreen = false;
-  }
-}
-
-// Handle window resizing
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-
-// Toggle fullscreen mode
-function toggleFullscreen() {
-  if (!isFullscreen) {
-    fullscreen(true);
-    isFullscreen = true;
-  } else {
-    fullscreen(false);
-    isFullscreen = false;
-  }
-}
-
-// Handle exiting fullscreen with Escape key
-function keyPressed() {
-  if (keyCode === ESCAPE) {
-    isFullscreen = false;
-  }
-}
-
-// Handle window resizing
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-
-// Toggle fullscreen mode
-function toggleFullscreen() {
-  if (!isFullscreen) {
-    fullscreen(true);
-    isFullscreen = true;
-  } else {
-    fullscreen(false);
-    isFullscreen = false;
-  }
-}
-
-// Handle exiting fullscreen with Escape key
-function keyPressed() {
-  if (keyCode === ESCAPE) {
-    isFullscreen = false;
-  }
 }
