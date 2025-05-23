@@ -13,7 +13,8 @@
     "https://pjbaldes.github.io/linearinterpolation",
     "https://pjbaldes.github.io/hitomezashi",
     "https://pjbaldes.github.io/shaperotater",
-     "https://pjbaldes.github.io/lovinit"
+    "https://pjbaldes.github.io/lovinit", 
+    "https://pjbaldes.github.io/checklist"
   ],
   "refreshInterval": 3600,
   "rotateInterval": 300
