@@ -16,7 +16,7 @@ andre{
     "https://pjbaldes.github.io/expander", 
     "https://pjbaldes.github.io/blorbs", 
     "https://pjbaldes.github.io/snakes", 
-    "https://pjbaldes.github.io/checklist"
+    "https://pjbaldes.github.io/cells"
   ],
   "refreshInterval": 3600,
   "rotateInterval": 300
