@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Lines</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Fullscreen canvas
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  let y = 0;
+
+  function draw() {
+    while (y < canvas.height) {
+      let x = 0;
+
+      while (x < canvas.width) {
+        const w = Math.random() * 90 + 10; // random(10, 100)
+        const shade = Math.floor(Math.random() * 256); // grayscale
+        const s = Math.floor(Math.random() * 5) + 1; // stroke weight 1–5
+
+        ctx.strokeStyle = `rgb(${shade},${shade},${shade})`;
+        ctx.lineWidth = s;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w, y);
+        ctx.stroke();
+
+        x += w;
+      }
+
+      y += Math.floor(Math.random() * 5) + 1;
+    }
+
+    requestAnimationFrame(() => {
+      y = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      draw();
+    });
+  }
+
+  draw();
+</script>
+</body>
+</html>
