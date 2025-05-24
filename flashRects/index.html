@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Moving Rectangles</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+</head>
+<body>
+  <script>
+    let x, y, s, x2, y2, s2;
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      x = 0;
+      y = random(height);
+      s = random(10, 200);
+      x2 = width;
+      y2 = random(height);
+      s2 = random(10, 200);
+      noStroke();
+    }
+
+    function draw() {
+      // background(220); // Uncomment to clear screen each frame
+      fill(random(255));
+      rect(x, y, s, s);
+      x += random(10, s);
+
+      fill(random(255));
+      rect(x2, y2, s2, s2);
+      x2 += random(10, s * -1);
+
+      if (x > width) {
+        x = 0;
+        y = random(height);
+        s = random(10, 200);
+      }
+
+      if (x2 < 0 - s2) {
+        x2 = width;
+        y2 = random(height);
+        s2 = random(10, 200);
+      }
+    }
+  </script>
+</body>
+</html>
