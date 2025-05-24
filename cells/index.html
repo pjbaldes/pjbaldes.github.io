@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi-Walker Grid Fill</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<canvas id="grid"></canvas>
+<script>
+  const canvas = document.getElementById('grid');
+  const ctx = canvas.getContext('2d');
+
+  const gridSize = 20;
+  let cols, rows;
+  let bgColor, startFillColor;
+  const walkerCount = 5;
+  let walkers = [];
+
+  function setupCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols = Math.floor(canvas.width / gridSize);
+    rows = Math.floor(canvas.height / gridSize);
+
+    bgColor = Math.random() < 0.5 ? '#000' : '#fff';
+    startFillColor = bgColor === '#000' ? '#fff' : '#000';
+
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  class Walker {
+    constructor() {
+      this.color = startFillColor;
+      this.pickNewStart();
+    }
+
+    drawCell(x, y) {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
+    }
+
+    flipColor() {
+      this.color = this.color === '#000' ? '#fff' : '#000';
+    }
+
+    pickNewStart() {
+      this.x = Math.floor(Math.random() * cols);
+      this.y = Math.floor(Math.random() * rows);
+      this.flipColor();
+      this.drawCell(this.x, this.y);
+    }
+
+    step() {
+      const directions = [
+        [0, 1], [1, 0], [0, -1], [-1, 0],
+        [1, 1], [-1, 1], [1, -1], [-1, -1]
+      ];
+      const [dx, dy] = directions[Math.floor(Math.random() * directions.length)];
+      const newX = this.x + dx;
+      const newY = this.y + dy;
+
+      if (newX < 0 || newY < 0 || newX >= cols || newY >= rows) {
+        this.pickNewStart();
+      } else {
+        this.x = newX;
+        this.y = newY;
+        this.drawCell(this.x, this.y);
+      }
+    }
+  }
+
+  function createWalkers() {
+    walkers = [];
+    for (let i = 0; i < walkerCount; i++) {
+      walkers.push(new Walker());
+    }
+  }
+
+  function animate() {
+    walkers.forEach(walker => walker.step());
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize', () => {
+    setupCanvas();
+    createWalkers();
+  });
+
+  setupCanvas();
+  createWalkers();
+  animate();
+</script>
+</body>
+</html>
