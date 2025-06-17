@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+</head>
+<body>
+    <script>
+        var x, y, w, h, sp;
+        var f = [0, 255];
+        var squares = [];
+        var shortDimension;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            rectMode(CENTER);
+            x = width / 2;
+            y = height / 2;
+            sp = 2;
+            noStroke();
+            
+            // Calculate short dimension
+            shortDimension = min(width, height);
+            
+            // Create first square with random spawn threshold and gradient phase
+            squares.push({
+                size: 0,
+                hasSpawned: false,
+                spawnThreshold: shortDimension / random(3, 10),
+                gradientPhase: random(TWO_PI)
+            });
+        }
+
+        function draw() {
+            // No background - like your original code
+            
+            // Update and draw all squares from oldest to newest
+            for (let i = 0; i < squares.length; i++) {
+                let square = squares[i];
+                
+                // Calculate gradient color (black to white to black)
+                let gradientValue = sin(square.size * 0.01 + square.gradientPhase);
+                let colorValue = map(gradientValue, -1, 1, 0, 255);
+                fill(colorValue);
+                
+                // Draw square
+                rect(x, y, square.size);
+                
+                // Grow square
+                square.size += sp;
+                
+                // Check if we need to spawn a new square
+                if (square.size >= square.spawnThreshold && !square.hasSpawned) {
+                    square.hasSpawned = true;
+                    
+                    // Create new square with different gradient phase
+                    squares.push({
+                        size: 0,
+                        hasSpawned: false,
+                        spawnThreshold: shortDimension / random(3, 10),
+                        gradientPhase: random(TWO_PI)
+                    });
+                }
+            }
+            
+            // Remove squares that are too big (cleanup) - use diagonal to ensure full screen coverage
+            let maxScreenDimension = sqrt(width * width + height * height);
+            squares = squares.filter(square => square.size < maxScreenDimension * 1.2);
+            
+            // Keep at least one square going
+            if (squares.length === 0) {
+                squares.push({
+                    size: 0,
+                    hasSpawned: false,
+                    spawnThreshold: shortDimension / random(3, 10),
+                    gradientPhase: random(TWO_PI)
+                });
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            x = width / 2;
+            y = height / 2;
+            shortDimension = min(width, height);
+        }
+    </script>
+</body>
+</html>
