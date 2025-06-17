@@ -23,7 +23,8 @@
     "https://pjbaldes.github.io/flashLines",
     "https://pjbaldes.github.io/interlaced",
     "https://pjbaldes.github.io/expandergray",
-    "https://pjbaldes.github.io/graph"
+    "https://pjbaldes.github.io/graph",
+    "https://pjbaldes.github.io/randVideo.html"
   ],
   "refreshInterval": 3600,
   "rotateInterval": 300
