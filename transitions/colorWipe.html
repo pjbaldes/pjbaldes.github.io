@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random RGB Wipe Transitions</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        #transition-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: white;
+            transform-origin: top left;
+            transform: scale(0, 0);
+            transition: transform 4s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="transition-overlay"></div>
+    
+    <script>
+        const overlay = document.getElementById('transition-overlay');
+        let currentBackgroundColor = 'black'; // Start with black
+        
+        // List of possible transition directions
+        const directions = [
+            'top',
+            'bottom',
+            'left',
+            'right',
+            'top-right',
+            'top-left',
+            'bottom-right',
+            'bottom-left'
+        ];
+        
+        // Function to generate a random RGB color
+        function getRandomRGBColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        
+        // Function to apply a random wipe transition
+        function applyRandomWipe() {
+            // Get a random direction
+            const direction = directions[Math.floor(Math.random() * directions.length)];
+            
+            // Generate random wipe duration between 1-5 seconds
+            const wipeDuration = Math.random() * 4 + 1; // 1 to 5 seconds
+            
+            // Update transition duration
+            overlay.style.transition = `transform ${wipeDuration}s ease`;
+            
+            // Configure the transition based on the direction - scaling UP to cover
+            switch(direction) {
+                case 'top':
+                    overlay.style.transformOrigin = 'top center';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+                case 'bottom':
+                    overlay.style.transformOrigin = 'bottom center';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+                case 'left':
+                    overlay.style.transformOrigin = 'center left';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+                case 'right':
+                    overlay.style.transformOrigin = 'center right';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+                case 'top-right':
+                    overlay.style.transformOrigin = 'top right';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+                case 'top-left':
+                    overlay.style.transformOrigin = 'top left';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+                case 'bottom-right':
+                    overlay.style.transformOrigin = 'bottom right';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+                case 'bottom-left':
+                    overlay.style.transformOrigin = 'bottom left';
+                    overlay.style.transform = 'scale(1, 1)';
+                    break;
+            }
+            
+            // After transition completes, update the background and reset for next time
+            setTimeout(() => {
+                document.body.style.backgroundColor = currentBackgroundColor;
+                overlay.style.transform = 'scale(0, 0)';
+                overlay.style.transition = 'none';
+                void overlay.offsetWidth;
+                
+                // Generate random delay between 2-5 seconds before next transition
+                const nextDelay = Math.random() * 3000 + 2000; // 2 to 5 seconds
+                setTimeout(startWipeTransition, nextDelay);
+            }, wipeDuration * 1000);
+        }
+        
+        // Function to start a wipe transition
+        function startWipeTransition() {
+            // Generate a new random RGB color for the overlay
+            const newOverlayColor = getRandomRGBColor();
+            overlay.style.backgroundColor = newOverlayColor;
+            
+            // Update the current background color for after the transition
+            currentBackgroundColor = newOverlayColor;
+            
+            // Reset the overlay to start small
+            overlay.style.transition = 'none';
+            overlay.style.transform = 'scale(0, 0)';
+            
+            // Force reflow
+            void overlay.offsetWidth;
+            
+            // Apply the random wipe (transition duration will be set inside applyRandomWipe)
+            applyRandomWipe();
+        }
+        
+        // Start the first transition after a random delay (2-5 seconds)
+        const initialDelay = Math.random() * 3000 + 2000; // 2 to 5 seconds
+        setTimeout(startWipeTransition, initialDelay);
+    </script>
+</body>
+</html>
