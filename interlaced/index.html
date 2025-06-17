@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interlaced Scrolling Shapes</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas to full screen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Animation variables
+        let startTime = Date.now();
+        let shapes = [];
+        let maxShapes = 3;
+        let shapeCount = 0;
+        
+        // Shape class
+        class Shape {
+            constructor() {
+                this.type = Math.random() > 0.5 ? 'circle' : 'rect';
+                this.size = Math.random() * (canvas.height * 1.5 - 300) + 300; // 300px to canvas height * 1.5
+                this.color = {
+                    r: Math.floor(Math.random() * 256),
+                    g: Math.floor(Math.random() * 256),
+                    b: Math.floor(Math.random() * 256)
+                };
+                
+                // Spawn from left or right
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.x = this.direction === 1 ? -this.size : canvas.width + this.size;
+                this.y = Math.random() * (canvas.height - this.size);
+                this.speed = Math.random() * 11 + 1; // 1-12 pixels per frame
+                
+                // Interlacing: odd lines if spawned from left, even if spawned from right
+                this.interlaceOdd = this.direction === 1;
+            }
+            
+            update() {
+                this.x += this.direction * this.speed;
+                
+                // Check if shape is completely off screen
+                if (this.direction === 1 && this.x > canvas.width + this.size) {
+                    return false; // Shape should be removed
+                }
+                if (this.direction === -1 && this.x < -this.size) {
+                    return false; // Shape should be removed
+                }
+                return true; // Shape is still on screen
+            }
+            
+            draw() {
+                ctx.fillStyle = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+                
+                if (this.type === 'circle') {
+                    this.drawInterlacedCircle();
+                } else {
+                    this.drawInterlacedRect();
+                }
+            }
+            
+            drawInterlacedCircle() {
+                const radius = this.size / 2;
+                const centerX = this.x;
+                const centerY = this.y + radius;
+                
+                // Draw circle line by line with complementary interlacing
+                for (let y = 0; y < this.size; y++) {
+                    // Left shapes draw even lines (0,2,4...), right shapes draw odd lines (1,3,5...)
+                    const shouldDraw = this.interlaceOdd ? (y % 2 === 0) : (y % 2 === 1);
+                    if (!shouldDraw) continue;
+                    
+                    const currentY = this.y + y;
+                    const distFromCenter = Math.abs(currentY - centerY);
+                    
+                    if (distFromCenter <= radius) {
+                        const halfWidth = Math.sqrt(radius * radius - distFromCenter * distFromCenter);
+                        const startX = centerX - halfWidth;
+                        const endX = centerX + halfWidth;
+                        
+                        ctx.fillRect(startX, currentY, endX - startX, 1);
+                    }
+                }
+            }
+            
+            drawInterlacedRect() {
+                // Draw rectangle line by line with complementary interlacing
+                for (let y = 0; y < this.size; y++) {
+                    // Left shapes draw even lines (0,2,4...), right shapes draw odd lines (1,3,5...)
+                    const shouldDraw = this.interlaceOdd ? (y % 2 === 0) : (y % 2 === 1);
+                    if (shouldDraw) {
+                        ctx.fillRect(this.x, this.y + y, this.size, 1);
+                    }
+                }
+            }
+        }
+        
+        function getBackgroundColor() {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const cycle = (Math.sin(elapsed * 0.2) + 1) / 2; // Slow cycle between 0 and 1
+            const gray = Math.floor(cycle * 255);
+            return `rgb(${gray}, ${gray}, ${gray})`;
+        }
+        
+        function spawnShape() {
+            if (shapes.length < maxShapes) {
+                shapes.push(new Shape());
+                shapeCount++;
+                
+                // Gradually increase max shapes every 5 shapes created
+                if (shapeCount % 5 === 0 && maxShapes < 8) {
+                    maxShapes++;
+                }
+            }
+        }
+        
+        function animate() {
+            // Clear canvas with cycling background
+            ctx.fillStyle = getBackgroundColor();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw shapes
+            shapes = shapes.filter(shape => {
+                const stillVisible = shape.update();
+                if (stillVisible) {
+                    shape.draw();
+                }
+                return stillVisible;
+            });
+            
+            // Spawn new shapes when needed
+            spawnShape();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
