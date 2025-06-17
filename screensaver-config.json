@@ -20,9 +20,10 @@
     "https://pjbaldes.github.io/cells",
     "https://pjbaldes.github.io/lovinit",
     "https://pjbaldes.github.io/fold",
-    "https://pjbaldes.github.io/flashLines"
-    "https://pjbaldes.github.io/interlaced"
-    "https://pjbaldes.github.io/expandergray"
+    "https://pjbaldes.github.io/flashLines",
+    "https://pjbaldes.github.io/interlaced",
+    "https://pjbaldes.github.io/expandergray",
+    "https://pjbaldes.github.io/graph"
   ],
   "refreshInterval": 3600,
   "rotateInterval": 300
