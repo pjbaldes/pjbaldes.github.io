@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Line Graph</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #888;
+            font-size: 12px;
+            background: rgba(128,128,128,0.1);
+            padding: 8px;
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(128,128,128,0.3);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Random background color choice
+        const isBlackBackground = Math.random() > 0.5;
+        const backgroundColor = isBlackBackground ? '#000000' : '#ffffff';
+        const textColor = isBlackBackground ? '#ffffff' : '#000000';
+        const gridColor = isBlackBackground ? '#333333' : '#cccccc';
+        
+        document.body.style.backgroundColor = backgroundColor;
+        
+        // Synonyms for axes labels
+        const valueSynonyms = ['value', 'merit', 'worth', 'usefulness', 'utility', 'practicality', 'advantage', 'desirability', 'benefit', 'ethics', 'standards', 'morality', 'esteem'];
+        const timeSynonyms = ['cadence', 'phase', 'era', 'epoch', 'lifetime', 'existence', 'vigor', 'synchronization'];
+        
+        // Random label selection
+        const yAxisLabel = valueSynonyms[Math.floor(Math.random() * valueSynonyms.length)];
+        const xAxisLabel = timeSynonyms[Math.floor(Math.random() * timeSynonyms.length)];
+        
+        // Margins for axes and legend
+        const margin = { top: 50, right: 200, bottom: 80, left: 80 };
+        
+        // Make canvas fullscreen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Colors for different lines
+        const colors = [
+            '#ff4757', // Red
+            '#3742fa', // Blue  
+            '#2ed573', // Green
+            '#ffa502', // Orange
+            '#ff6b6b', // Light Red
+            '#4834d4', // Purple
+            '#00d2d3', // Cyan
+            '#ff9ff3'  // Pink
+        ];
+        
+        // Abstract emotional states - hard to define feelings
+        const emotionalStates = [
+            'dignity', 'empathy', 'ennui', 'melancholy', 'serenity', 'angst', 
+            'nostalgia', 'euphoria', 'resignation', 'yearning', 'contempt',
+            'reverence', 'indifference', 'trepidation', 'schadenfreude', 
+            'weltschmerz', 'saudade'
+        ];
+        
+        let currentLineIndex = 0;
+        let animationId;
+        let lines = [];
+        let chartWidth, chartHeight;
+        let selectedStates = [];
+        
+        // Shuffle and select random emotional states for this session (limit to 6)
+        function initializeStates() {
+            const shuffled = [...emotionalStates].sort(() => Math.random() - 0.5);
+            selectedStates = shuffled.slice(0, 6);
+            
+            // Ensure at least one upward trending state is included
+            const upwardTrendingStates = ['ennui', 'contempt', 'angst', 'melancholy'];
+            const hasUpwardTrending = selectedStates.some(state => upwardTrendingStates.includes(state));
+            
+            if (!hasUpwardTrending) {
+                const randomUpward = upwardTrendingStates[Math.floor(Math.random() * upwardTrendingStates.length)];
+                selectedStates[Math.floor(Math.random() * selectedStates.length)] = randomUpward;
+            }
+        }
+        
+        function drawLegend() {
+            const legendX = canvas.width - margin.right + 20;
+            const legendY = margin.top + 30;
+            const lineHeight = 25;
+            
+            lines.forEach((line, index) => {
+                const y = legendY + index * lineHeight;
+                
+                // Draw color line
+                ctx.strokeStyle = line.color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(legendX, y);
+                ctx.lineTo(legendX + 20, y);
+                ctx.stroke();
+                
+                // Draw label
+                ctx.font = '12px Arial';
+                ctx.fillStyle = textColor;
+                ctx.textAlign = 'left';
+                ctx.fillText(line.emotionalState, legendX + 25, y + 4);
+            });
+        }
+        
+        function drawAxes() {
+            chartWidth = canvas.width - margin.left - margin.right;
+            chartHeight = canvas.height - margin.top - margin.bottom;
+            
+            ctx.strokeStyle = textColor;
+            ctx.lineWidth = 2;
+            ctx.font = '16px Arial';
+            ctx.fillStyle = textColor;
+            
+            // Draw Y-axis
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, canvas.height - margin.bottom);
+            ctx.stroke();
+            
+            // Draw X-axis
+            ctx.beginPath();
+            ctx.moveTo(margin.left, canvas.height - margin.bottom);
+            ctx.lineTo(canvas.width - margin.right, canvas.height - margin.bottom);
+            ctx.stroke();
+            
+            // Y-axis label (rotated)
+            ctx.save();
+            ctx.translate(20, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText(yAxisLabel, 0, 0);
+            ctx.restore();
+            
+            // X-axis label
+            ctx.textAlign = 'center';
+            ctx.fillText(xAxisLabel, canvas.width / 2, canvas.height - 20);
+            
+            // Draw grid lines and scale
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            ctx.font = '12px Arial';
+            
+            // Y-axis grid lines and labels
+            for (let i = 0; i <= 10; i++) {
+                const y = margin.top + (i / 10) * chartHeight;
+                const value = (100 - i * 10).toFixed(0);
+                
+                // Grid line
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(canvas.width - margin.right, y);
+                ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = textColor;
+                ctx.textAlign = 'right';
+                ctx.fillText(value, margin.left - 10, y + 4);
+            }
+            
+            // X-axis grid lines and labels
+            for (let i = 0; i <= 10; i++) {
+                const x = margin.left + (i / 10) * chartWidth;
+                const value = (i * 10).toFixed(0);
+                
+                // Grid line
+                ctx.strokeStyle = gridColor;
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top);
+                ctx.lineTo(x, canvas.height - margin.bottom);
+                ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = textColor;
+                ctx.textAlign = 'center';
+                ctx.fillText(value, x, canvas.height - margin.bottom + 20);
+            }
+        }
+        
+        class AnimatedLine {
+            constructor(color, emotionalState, lineIndex) {
+                this.color = color;
+                this.emotionalState = emotionalState;
+                this.lineIndex = lineIndex;
+                this.points = [];
+                this.currentPoint = 0;
+                this.startX = margin.left;
+                this.startY = this.getStartingY();
+                this.isComplete = false;
+                this.generatePath();
+            }
+            
+            getStartingY() {
+                // Allow lines to start at various heights for crossing
+                const minY = margin.top + chartHeight * 0.1;
+                const maxY = margin.top + chartHeight * 0.9;
+                return minY + Math.random() * (maxY - minY);
+            }
+            
+            generatePath() {
+                const numPoints = 50;
+                const baseStepX = chartWidth / numPoints;
+                
+                let currentX = this.startX;
+                let currentY = this.startY;
+                
+                // Different patterns based on emotional state
+                const upwardTrendingStates = ['ennui', 'contempt', 'angst', 'melancholy'];
+                const shouldTrendUp = upwardTrendingStates.includes(this.emotionalState);
+                const shouldCrash = Math.random() > 0.6 && !shouldTrendUp; // 40% chance of crash pattern
+                const crashPoint = shouldCrash ? 0.3 + Math.random() * 0.4 : 1; // Crash between 30-70% through
+                
+                for (let i = 0; i <= numPoints; i++) {
+                    const progress = i / numPoints;
+                    
+                    // Reduced random variation for smoother lines
+                    const randomVariation = (Math.random() - 0.5) * 40;
+                    
+                    let trendComponent = 0;
+                    
+                    if (shouldTrendUp) {
+                        // These emotions trend upward
+                        trendComponent = -progress * chartHeight * 0.7;
+                    } else if (shouldCrash && progress > crashPoint) {
+                        // Crash pattern: trend up first, then crash
+                        const precrashTrend = -crashPoint * chartHeight * 0.4;
+                        const crashIntensity = (progress - crashPoint) / (1 - crashPoint);
+                        const crashTrend = crashIntensity * chartHeight * 0.8;
+                        trendComponent = precrashTrend + crashTrend;
+                    } else if (shouldCrash) {
+                        // Pre-crash upward trend
+                        trendComponent = -progress * chartHeight * 0.4;
+                    } else {
+                        // Regular downward trend with some variation
+                        const trendStrength = 0.3 + Math.random() * 0.4; // 30-70% trend strength
+                        trendComponent = progress * chartHeight * trendStrength;
+                    }
+                    
+                    currentY = this.startY + trendComponent + randomVariation;
+                    
+                    // Keep within chart bounds
+                    currentY = Math.max(margin.top, Math.min(canvas.height - margin.bottom, currentY));
+                    
+                    this.points.push({
+                        x: currentX,
+                        y: currentY
+                    });
+                    
+                    // Longer irregular horizontal steps - vary between 0.3x and 2x base step
+                    const stepVariation = 0.3 + Math.random() * 1.7;
+                    currentX += baseStepX * stepVariation;
+                }
+            }
+            
+            update() {
+                if (this.currentPoint < this.points.length - 1) {
+                    this.currentPoint += 0.08; // Faster drawing so it starts sooner
+                } else if (!this.isComplete) {
+                    this.isComplete = true;
+                }
+            }
+            
+            draw() {
+                if (this.points.length < 2 || this.currentPoint < 1) return;
+                
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // Draw the line
+                ctx.beginPath();
+                ctx.moveTo(this.points[0].x, this.points[0].y);
+                
+                const endIndex = Math.floor(this.currentPoint);
+                for (let i = 1; i <= endIndex && i < this.points.length; i++) {
+                    ctx.lineTo(this.points[i].x, this.points[i].y);
+                }
+                
+                // If we're between points, interpolate
+                if (this.currentPoint % 1 !== 0 && endIndex < this.points.length - 1) {
+                    const progress = this.currentPoint % 1;
+                    const currentPoint = this.points[endIndex];
+                    const nextPoint = this.points[endIndex + 1];
+                    
+                    const interpolatedX = currentPoint.x + (nextPoint.x - currentPoint.x) * progress;
+                    const interpolatedY = currentPoint.y + (nextPoint.y - currentPoint.y) * progress;
+                    
+                    ctx.lineTo(interpolatedX, interpolatedY);
+                }
+                
+                ctx.stroke();
+                
+                // Draw arrow at the end if line is being drawn
+                if (endIndex > 0) {
+                    this.drawArrow();
+                }
+                
+                // Add glow effect
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            drawArrow() {
+                const endIndex = Math.min(Math.floor(this.currentPoint), this.points.length - 1);
+                if (endIndex < 1) return;
+                
+                const currentPoint = this.points[endIndex];
+                const prevPoint = this.points[endIndex - 1];
+                
+                // Calculate arrow direction
+                const dx = currentPoint.x - prevPoint.x;
+                const dy = currentPoint.y - prevPoint.y;
+                const angle = Math.atan2(dy, dx);
+                
+                const arrowSize = 12;
+                
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(currentPoint.x, currentPoint.y);
+                ctx.lineTo(
+                    currentPoint.x - arrowSize * Math.cos(angle - Math.PI / 6),
+                    currentPoint.y - arrowSize * Math.sin(angle - Math.PI / 6)
+                );
+                ctx.lineTo(
+                    currentPoint.x - arrowSize * Math.cos(angle + Math.PI / 6),
+                    currentPoint.y - arrowSize * Math.sin(angle + Math.PI / 6)
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        
+        let autoRestartTimer = null;
+        
+        function startAnimation() {
+            lines = [];
+            currentLineIndex = 0;
+            
+            // Clear any existing restart timer
+            if (autoRestartTimer) {
+                clearTimeout(autoRestartTimer);
+                autoRestartTimer = null;
+            }
+            
+            // Initialize chart dimensions first
+            chartWidth = canvas.width - margin.left - margin.right;
+            chartHeight = canvas.height - margin.top - margin.bottom;
+            
+            // Initialize random emotional states for this session
+            initializeStates();
+            
+            // Create first line
+            lines.push(new AnimatedLine(colors[0], selectedStates[0], 0));
+            
+            animate();
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw axes and grid
+            drawAxes();
+            
+            // Update and draw all lines
+            lines.forEach(line => {
+                line.update();
+                line.draw();
+            });
+            
+            // Draw legend
+            drawLegend();
+            
+            // Check if current line is complete and we need to start a new one
+            const currentLine = lines[lines.length - 1];
+            if (currentLine && currentLine.isComplete && currentLineIndex < 5) { // 0-5 = 6 lines
+                currentLineIndex++;
+                lines.push(new AnimatedLine(colors[currentLineIndex], selectedStates[currentLineIndex], currentLineIndex));
+            }
+            
+            // Check if all lines are complete
+            const allLinesComplete = lines.length === 6 && lines.every(line => line.isComplete);
+            
+            if (allLinesComplete && !autoRestartTimer) {
+                // Wait 5 seconds before restarting
+                autoRestartTimer = setTimeout(() => {
+                    startAnimation();
+                }, 5000);
+            }
+            
+            // Continue animation if not all lines are complete
+            if (!allLinesComplete) {
+                animationId = requestAnimationFrame(animate);
+            }
+        }
+        
+        // Start the animation
+        startAnimation();
+        
+        // Handle window focus/blur for performance
+        window.addEventListener('blur', () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            if (autoRestartTimer) {
+                clearTimeout(autoRestartTimer);
+                autoRestartTimer = null;
+            }
+        });
+        
+        window.addEventListener('focus', () => {
+            if (lines.length > 0) {
+                animate();
+            }
+        });
+    </script>
+</body>
+</html>
