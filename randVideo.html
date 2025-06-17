@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Video Background</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+
+    </style>
+</head>
+<body>
+    <video id="background-video" autoplay muted loop>
+        Your browser does not support the video tag.
+    </video>
+
+    <script>
+        let videoList = [];
+        let currentVideoIndex = -1;
+
+        // Fetch video list from JSON file
+        async function loadVideoList() {
+            try {
+                const response = await fetch('videos.json');
+                const data = await response.json();
+                videoList = data.videos;
+                
+                if (videoList.length > 0) {
+                    loadRandomVideo();
+                }
+            } catch (error) {
+                console.error('Error loading video list:', error);
+            }
+        }
+
+        // Load a random video
+        function loadRandomVideo() {
+            if (videoList.length === 0) return;
+
+            // Pick a random video (avoid repeating the same video if possible)
+            let newIndex;
+            if (videoList.length > 1) {
+                do {
+                    newIndex = Math.floor(Math.random() * videoList.length);
+                } while (newIndex === currentVideoIndex);
+            } else {
+                newIndex = 0;
+            }
+
+            currentVideoIndex = newIndex;
+            const videoUrl = videoList[currentVideoIndex];
+            
+            const video = document.getElementById('background-video');
+
+            // Load new video
+            video.src = videoUrl;
+
+            video.onerror = function() {
+                console.error('Error loading video:', videoUrl);
+                // Try another video if this one fails
+                if (videoList.length > 1) {
+                    setTimeout(loadRandomVideo, 2000);
+                }
+            };
+        }
+
+        // Load video list when page loads
+        window.addEventListener('load', loadVideoList);
+
+        // Auto-advance to next video when current one ends (if not looping)
+        document.getElementById('background-video').addEventListener('ended', function() {
+            if (!this.loop) {
+                loadRandomVideo();
+            }
+        });
+
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.key === ' ') { // Spacebar
+                event.preventDefault();
+                loadRandomVideo();
+            }
+        });
+    </script>
+</body>
+</html>
