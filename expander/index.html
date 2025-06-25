@@ -9,9 +9,13 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
+      width: 100%;
+      height: 100%;
     }
     canvas {
       display: block;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
@@ -21,21 +25,17 @@
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   let width, height;
-
   function resizeCanvas() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
   }
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
-
   const colors = ['#000000', '#FFFFFF', '#FF00FF', '#00FFFF', '#FFFF00', '#FF0000', '#00FF00', '#0000FF'];
-
   function getContrastingColor(currentColor) {
     let otherColors = colors.filter(c => c !== currentColor);
     return otherColors[Math.floor(Math.random() * otherColors.length)];
   }
-
   function drawShape(type, x, y, size, color, rotation) {
     ctx.save();
     ctx.translate(x, y);
@@ -92,11 +92,9 @@
     }
     ctx.restore();
   }
-
   let currentColor = colors[Math.floor(Math.random() * colors.length)];
   let shapeTypes = ['square', 'circle', 'triangle', 'ellipse', 'hexagon', 'pentagon', 'trapezoid'];
   let shape = null;
-
   function newShape() {
     const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
     const x = Math.random() * width;
@@ -108,25 +106,20 @@
     const rotationSpeed = (Math.random() * 0.01 + 0.002) * (Math.random() < 0.5 ? 1 : -1);
     shape = { type, x, y, size, speed: initialSpeed, color, rotation, rotationSpeed };
   }
-
   function animate() {
     ctx.fillStyle = currentColor;
     ctx.fillRect(0, 0, width, height);
-
     if (!shape) newShape();
     drawShape(shape.type, shape.x, shape.y, shape.size, shape.color, shape.rotation);
     shape.size += shape.speed;
     shape.speed *= 1.01; // gravity-like acceleration
     shape.rotation += shape.rotationSpeed;
-
     if (shape.size > Math.max(width, height) * 2) {
       currentColor = shape.color;
       shape = null;
     }
-
     requestAnimationFrame(animate);
   }
-
   animate();
 </script>
 </body>
