@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morphing Triangle Grid</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #canvas {
+            display: block;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let animationId;
+        let grid = [];
+        let cols, rows;
+        let cellWidth, cellHeight;
+        let backgroundColor, fillColor;
+        let animationProgress = 0;
+        let isAnimating = false;
+        let cycleCount = 0;
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            setupGrid();
+        }
+        
+        function randomRGB() {
+            return {
+                r: Math.floor(Math.random() * 256),
+                g: Math.floor(Math.random() * 256),
+                b: Math.floor(Math.random() * 256)
+            };
+        }
+        
+        function rgbToString(rgb) {
+            return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+        }
+        
+        function setupGrid() {
+            // More varied grid sizes - allowing for very different aspect ratios
+            const gridType = Math.random();
+            
+            if (gridType < 0.3) {
+                // Tall grids (few columns, many rows)
+                cols = Math.floor(Math.random() * 4) + 2; // 2-5 columns
+                rows = Math.floor(Math.random() * 7) + 4; // 4-10 rows
+            } else if (gridType < 0.6) {
+                // Wide grids (many columns, few rows)
+                cols = Math.floor(Math.random() * 11) + 5; // 5-15 columns
+                rows = Math.floor(Math.random() * 4) + 2; // 2-5 rows
+            } else {
+                // More square-ish grids
+                cols = Math.floor(Math.random() * 8) + 4; // 4-11 columns
+                rows = Math.floor(Math.random() * 6) + 3; // 3-8 rows
+            }
+            
+            cellWidth = canvas.width / cols;
+            cellHeight = canvas.height / rows;
+            
+            // Random colors - ensure they're different enough
+            backgroundColor = randomRGB();
+            do {
+                fillColor = randomRGB();
+            } while (Math.abs(backgroundColor.r - fillColor.r) < 50 && 
+                     Math.abs(backgroundColor.g - fillColor.g) < 50 && 
+                     Math.abs(backgroundColor.b - fillColor.b) < 50);
+            
+            // Initialize grid
+            grid = [];
+            
+            // Decide if all triangles should have same orientation (40% chance)
+            const uniformOrientation = Math.random() < 0.4;
+            const baseOrientation = uniformOrientation ? Math.floor(Math.random() * 4) : null;
+            
+            for (let row = 0; row < rows; row++) {
+                grid[row] = [];
+                for (let col = 0; col < cols; col++) {
+                    let orientation;
+                    if (uniformOrientation) {
+                        // Sometimes add a 90-degree rotation pattern (30% chance when uniform)
+                        if (Math.random() < 0.3) {
+                            // Create a checkerboard or row/column pattern
+                            const patternType = Math.floor(Math.random() * 3);
+                            switch(patternType) {
+                                case 0: // Checkerboard
+                                    orientation = (baseOrientation + ((row + col) % 2)) % 4;
+                                    break;
+                                case 1: // Row alternation
+                                    orientation = (baseOrientation + (row % 2)) % 4;
+                                    break;
+                                case 2: // Column alternation
+                                    orientation = (baseOrientation + (col % 2)) % 4;
+                                    break;
+                            }
+                        } else {
+                            orientation = baseOrientation;
+                        }
+                    } else {
+                        // Fully random orientations
+                        orientation = Math.floor(Math.random() * 4);
+                    }
+                    
+                    grid[row][col] = {
+                        x: col * cellWidth,
+                        y: row * cellHeight,
+                        progress: 0,
+                        orientation: orientation
+                    };
+                }
+            }
+            
+            animationProgress = 0;
+            isAnimating = true;
+        }
+        
+        function drawTriangle(x, y, width, height, progress, orientation) {
+            // Use current or swapped colors based on cycle
+            const useSwappedColors = cycleCount % 2 === 1;
+            const currentFillColor = useSwappedColors ? backgroundColor : fillColor;
+            const currentBackColor = useSwappedColors ? fillColor : backgroundColor;
+            
+            // Clear this cell with background color first
+            ctx.fillStyle = rgbToString(currentBackColor);
+            ctx.fillRect(x, y, width, height);
+            
+            ctx.fillStyle = rgbToString(currentFillColor);
+            ctx.beginPath();
+            
+            const phase1 = progress <= 1;
+            const localProgress = phase1 ? progress : progress - 1;
+            
+            switch(orientation) {
+                case 0: // Original: hypotenuse up-right -> up-left
+                    if (phase1) {
+                        const leftX = x + (width * localProgress);
+                        ctx.moveTo(leftX, y + height);
+                        ctx.lineTo(x + width, y + height);
+                        ctx.lineTo(x + width, y);
+                    } else {
+                        const rightX = x + width - (width * localProgress);
+                        ctx.moveTo(x, y + height);
+                        ctx.lineTo(rightX, y + height);
+                        ctx.lineTo(x, y);
+                    }
+                    break;
+                    
+                case 1: // Rotated 90°: hypotenuse down-right -> down-left
+                    if (phase1) {
+                        const leftX = x + (width * localProgress);
+                        ctx.moveTo(leftX, y);
+                        ctx.lineTo(x + width, y);
+                        ctx.lineTo(x + width, y + height);
+                    } else {
+                        const rightX = x + width - (width * localProgress);
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(rightX, y);
+                        ctx.lineTo(x, y + height);
+                    }
+                    break;
+                    
+                case 2: // Rotated 180°: hypotenuse down-left -> down-right
+                    if (phase1) {
+                        const rightX = x + width - (width * localProgress);
+                        ctx.moveTo(rightX, y);
+                        ctx.lineTo(x, y);
+                        ctx.lineTo(x, y + height);
+                    } else {
+                        const leftX = x + (width * localProgress);
+                        ctx.moveTo(leftX, y);
+                        ctx.lineTo(x + width, y);
+                        ctx.lineTo(x + width, y + height);
+                    }
+                    break;
+                    
+                case 3: // Rotated 270°: hypotenuse up-left -> up-right
+                    if (phase1) {
+                        const rightX = x + width - (width * localProgress);
+                        ctx.moveTo(rightX, y + height);
+                        ctx.lineTo(x, y + height);
+                        ctx.lineTo(x, y);
+                    } else {
+                        const leftX = x + (width * localProgress);
+                        ctx.moveTo(leftX, y + height);
+                        ctx.lineTo(x + width, y + height);
+                        ctx.lineTo(x + width, y);
+                    }
+                    break;
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function animate() {
+            // Don't clear entire canvas anymore - let drawTriangle handle individual cells
+            
+            let allComplete = true;
+            
+            // Update and draw each cell
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const cell = grid[row][col];
+                    
+                    if (cell.progress < 2) {
+                        cell.progress += 0.001; // Even slower (half the previous speed)
+                        allComplete = false;
+                    }
+                    
+                    // Clamp progress to prevent overshoot
+                    cell.progress = Math.min(cell.progress, 2);
+                    
+                    drawTriangle(cell.x, cell.y, cellWidth, cellHeight, cell.progress, cell.orientation);
+                }
+            }
+            
+            // Update animation info based on overall progress
+            if (allComplete) {
+                // Animation complete, will restart soon
+            } else {
+                // Animation in progress
+            }
+            
+            // If all animations complete, start new cycle
+            if (allComplete) {
+                cycleCount++;
+                setTimeout(() => {
+                    setupGrid();
+                    animate(); // Restart the animation loop
+                }, 800);
+            } else {
+                animationId = requestAnimationFrame(animate);
+            }
+        }
+        
+        function start() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            cycleCount = 0; // Reset cycle count on manual restart
+            resizeCanvas();
+            animate();
+        }
+        
+        // Event listeners
+        window.addEventListener('resize', resizeCanvas);
+        canvas.addEventListener('click', start);
+        
+        // Start the animation
+        start();
+    </script>
+</body>
+</html>
