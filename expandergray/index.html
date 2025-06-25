@@ -2,6 +2,13 @@
 <html>
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
     <script>
@@ -9,7 +16,6 @@
         var f = [0, 255];
         var squares = [];
         var shortDimension;
-
         function setup() {
             createCanvas(windowWidth, windowHeight);
             rectMode(CENTER);
@@ -29,7 +35,6 @@
                 gradientPhase: random(TWO_PI)
             });
         }
-
         function draw() {
             // No background - like your original code
             
@@ -76,7 +81,6 @@
                 });
             }
         }
-
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
             x = width / 2;
