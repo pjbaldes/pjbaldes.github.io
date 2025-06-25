@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Iframe Screensaver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .iframe-section {
+            position: absolute;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .refresh-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container"></div>
+    <button class="refresh-btn" onclick="generateLayout()">New Layout</button>
+
+    <script>
+        let urls = [];
+
+        // Fetch URLs from your JSON config with CORS workaround
+        async function loadUrls() {
+            try {
+                // Try different methods to bypass CORS
+                const response = await fetch('https://pjbaldes.github.io/screensaver-config.json', {
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const config = await response.json();
+                urls = config.urls || [];
+                console.log(`Loaded ${urls.length} URLs from config`);
+                generateLayout();
+            } catch (error) {
+                console.error('Failed to load URLs from config:', error);
+                console.log('Trying alternative method...');
+                
+                // Alternative: try using a CORS proxy
+                try {
+                    const proxyResponse = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://pjbaldes.github.io/screensaver-config.json'));
+                    const proxyData = await proxyResponse.json();
+                    const config = JSON.parse(proxyData.contents);
+                    urls = config.urls || [];
+                    console.log(`Loaded ${urls.length} URLs via proxy`);
+                    generateLayout();
+                } catch (proxyError) {
+                    console.error('Proxy method also failed:', proxyError);
+                    alert('Unable to load URL config. Please check that https://pjbaldes.github.io/screensaver-config.json is accessible and try refreshing the page.');
+                }
+            }
+        }
+
+        class Rectangle {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+            }
+            
+            getArea() {
+                return this.width * this.height;
+            }
+        }
+
+        function getRandomUrls() {
+            const numUrls = Math.floor(Math.random() * 4) + 2; // 2-5 URLs
+            const shuffled = [...urls].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, numUrls);
+        }
+
+        function randomBisect(rect, minRatio = 1/6) {
+            const screenArea = window.innerWidth * window.innerHeight;
+            const minArea = screenArea * minRatio;
+            
+            // Check if rectangle is too small to split
+            if (rect.getArea() < minArea * 2) {
+                return [rect];
+            }
+            
+            const isHorizontal = Math.random() > 0.5;
+            
+            if (isHorizontal) {
+                // Split horizontally
+                const minHeight = Math.max(window.innerHeight * minRatio, minArea / rect.width);
+                const maxHeight = rect.height - minHeight;
+                
+                if (maxHeight <= minHeight) {
+                    return [rect];
+                }
+                
+                const splitY = rect.y + minHeight + Math.random() * (maxHeight - minHeight);
+                
+                return [
+                    new Rectangle(rect.x, rect.y, rect.width, splitY - rect.y),
+                    new Rectangle(rect.x, splitY, rect.width, rect.y + rect.height - splitY)
+                ];
+            } else {
+                // Split vertically
+                const minWidth = Math.max(window.innerWidth * minRatio, minArea / rect.height);
+                const maxWidth = rect.width - minWidth;
+                
+                if (maxWidth <= minWidth) {
+                    return [rect];
+                }
+                
+                const splitX = rect.x + minWidth + Math.random() * (maxWidth - minWidth);
+                
+                return [
+                    new Rectangle(rect.x, rect.y, splitX - rect.x, rect.height),
+                    new Rectangle(splitX, rect.y, rect.x + rect.width - splitX, rect.height)
+                ];
+            }
+        }
+
+        function generateSections(targetCount) {
+            let sections = [new Rectangle(0, 0, window.innerWidth, window.innerHeight)];
+            
+            while (sections.length < targetCount) {
+                // Find the largest section to split
+                let largestIndex = 0;
+                let largestArea = sections[0].getArea();
+                
+                for (let i = 1; i < sections.length; i++) {
+                    const area = sections[i].getArea();
+                    if (area > largestArea) {
+                        largestArea = area;
+                        largestIndex = i;
+                    }
+                }
+                
+                const newSections = randomBisect(sections[largestIndex]);
+                
+                // If we couldn't split (section too small), stop
+                if (newSections.length === 1) {
+                    break;
+                }
+                
+                // Replace the split section with the two new ones
+                sections.splice(largestIndex, 1, ...newSections);
+            }
+            
+            return sections;
+        }
+
+        function createIframe(url, rect) {
+            const section = document.createElement('div');
+            section.className = 'iframe-section';
+            section.style.left = rect.x + 'px';
+            section.style.top = rect.y + 'px';
+            section.style.width = rect.width + 'px';
+            section.style.height = rect.height + 'px';
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.allow = "autoplay; encrypted-media";
+            iframe.loading = "lazy";
+            
+            section.appendChild(iframe);
+            return section;
+        }
+
+        function generateLayout() {
+            // Don't generate if URLs aren't loaded yet
+            if (urls.length === 0) return;
+            
+            const container = document.getElementById('container');
+            container.innerHTML = '';
+            
+            const selectedUrls = getRandomUrls();
+            const sections = generateSections(selectedUrls.length);
+            
+            for (let i = 0; i < selectedUrls.length && i < sections.length; i++) {
+                const iframeElement = createIframe(selectedUrls[i], sections[i]);
+                container.appendChild(iframeElement);
+            }
+        }
+
+        // Load URLs and generate initial layout
+        loadUrls();
+        
+        // Show/hide button on mouse movement
+        let mouseTimeout;
+        const refreshBtn = document.querySelector('.refresh-btn');
+        
+        document.addEventListener('mousemove', () => {
+            refreshBtn.classList.add('visible');
+            
+            // Clear existing timeout
+            clearTimeout(mouseTimeout);
+            
+            // Hide button after 3 seconds of no mouse movement
+            mouseTimeout = setTimeout(() => {
+                refreshBtn.classList.remove('visible');
+            }, 3000);
+        });
+        
+        // Hide button initially after a short delay
+        setTimeout(() => {
+            refreshBtn.classList.remove('visible');
+        }, 3000);
+        
+        // Random auto-refresh between 10 seconds and 3 minutes
+        function scheduleRandomRefresh() {
+            const minTime = 10 * 1000; // 10 seconds
+            const maxTime = 3 * 60 * 1000; // 3 minutes
+            const randomTime = Math.random() * (maxTime - minTime) + minTime;
+            
+            setTimeout(() => {
+                generateLayout();
+                scheduleRandomRefresh(); // Schedule the next random refresh
+            }, randomTime);
+        }
+        
+        // Start the random refresh cycle
+        scheduleRandomRefresh();
+        
+        // Regenerate on window resize
+        window.addEventListener('resize', generateLayout);
+    </script>
+</body>
+</html>
