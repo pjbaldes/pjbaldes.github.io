@@ -3,12 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <title>Moving Rectangles</title>
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>
+    /* Remove all scrollbars and prevent overflow */
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+    }
+    
+    /* Ensure the canvas container doesn't create scrollbars */
+    main {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
 </head>
 <body>
   <script> 
     let x, y, s, x2, y2, s2;
-
     function setup() {
       createCanvas(windowWidth, windowHeight);
       x = 0;
@@ -19,23 +35,19 @@
       s2 = random(10, 200);
       noStroke();
     }
-
     function draw() {
       // background(220); // Uncomment to clear screen each frame
       fill(random(255));
       rect(x, y, s, s);
       x += random(10, s);
-
       fill(random(255));
       rect(x2, y2, s2, s2);
       x2 += random(10, s * -1);
-
       if (x > width) {
         x = 0;
         y = random(height);
         s = random(10, 200);
       }
-
       if (x2 < 0 - s2) {
         x2 = width;
         y2 = random(height);
