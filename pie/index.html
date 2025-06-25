@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed Pie Chart</title>
+    <title>Improved Pie Chart</title>
     <style>
         body {
             margin: 0;
@@ -20,58 +20,58 @@
     <canvas id="pieCanvas"></canvas>
 
     <script>
-        // List of words - including abstract concepts and random dictionary words (500 total)
+        // List of words - transformed to adjectives and actions (500 total)
         const words = [
-            // First 50 words from original list
-            "dignity", "freedom", "justice", "wisdom", "courage", "honesty", "integrity", "loyalty", "empathy", "serenity",
-            "patience", "humility", "creativity", "innocence", "clarity", "mindfulness", "awareness", "intuition", "spirituality", "enlightenment",
-            "tranquility", "curiosity", "ambition", "motivation", "charisma", "sincerity", "generosity", "compassion", "forgiveness", "tolerance",
-            "consciousness", "morality", "ethics", "philosophy", "ideology", "nostalgia", "melancholy", "solitude", "longing", "desire",
-            "hope", "faith", "destiny", "fate", "infinity", "eternity", "mortality", "existence", "essence", "identity",
-            // 450 words from across the entire dictionary
-            "abacus", "abdicate", "aberration", "abject", "abnormal", "abolish", "aboriginal", "abrasive", "abrogate", "abscond",
-            "accolade", "accumulate", "acerbic", "acquiesce", "acrobat", "acronym", "adamant", "admonish", "adumbrate", "advent",
-            "aficionado", "agile", "agnostic", "albatross", "alchemy", "allegiance", "almanac", "alpaca", "ambush", "amulet",
-            "anagram", "anecdote", "animosity", "antithesis", "apogee", "apparition", "archipelago", "ardent", "argonaut", "armageddon",
-            "artifact", "ascension", "asphyxiate", "astringent", "atlas", "atrophy", "audacious", "authentic", "avalanche", "aversion",
-            "axiom", "babble", "balcony", "ballast", "bamboo", "baroque", "bastion", "beatify", "bedlam", "behemoth",
-            "belligerent", "benefactor", "bequest", "berserk", "bibliography", "bijection", "bioluminescence", "biosphere", "birthright", "blasphemy",
-            "blather", "blithe", "boggle", "bombastic", "bourgeois", "brackish", "bramble", "brandish", "bravado", "brazier",
-            "breach", "brevity", "bridle", "broccoli", "bronze", "bucolic", "buffalo", "bulwark", "buoyant", "burlesque",
-            "cadaver", "cadence", "calisthenics", "callous", "calumny", "camaraderie", "canary", "candidacy", "canopy", "cantankerous",
-            "capacious", "capillary", "capitulate", "capricious", "captivate", "caravan", "cardinal", "carousel", "cartographer", "cascade",
-            "castigate", "catalyst", "catapult", "catastrophe", "catharsis", "cathedral", "caustic", "cavalier", "celestial", "centrifuge",
-            "cerulean", "chagrin", "chalice", "chameleon", "champion", "chandeliers", "chaotic", "charlatan", "chasm", "chastise",
-            "cherish", "chicanery", "chimera", "chisel", "chivalry", "choreograph", "chromatic", "chronicle", "chrysalis", "cipher",
-            "circuitous", "circumference", "citadel", "clairvoyant", "clandestine", "cleanse", "cliché", "climax", "clockwork", "coalesce",
-            "cobalt", "cocoon", "coerce", "cognizant", "coherent", "colloquial", "colossal", "comatose", "combustion", "commendable",
-            "commotion", "compendium", "complacent", "complicit", "compunction", "concentric", "conciliatory", "concoction", "conduit", "confluence",
-            "conglomerate", "connoisseur", "consensus", "conspicuous", "constellation", "contagious", "contemplate", "contrite", "convivial", "copious",
-            "coquettish", "cordial", "cornucopia", "coronation", "corpulent", "corroborate", "corrosive", "cosmic", "countenance", "courageous",
-            "covenant", "craven", "crescent", "crestfallen", "crimson", "criterion", "critique", "crucible", "cryptic", "crystallize",
-            "culminate", "culpable", "cultivate", "cumbersome", "cumulative", "cupidity", "curator", "cursory", "cusp", "custodial",
-            "cyanide", "cyclical", "cynical", "dalliance", "damask", "dappled", "debacle", "debilitate", "debonair", "decadent",
-            "decipher", "decorous", "decrepit", "deferential", "defiant", "deftly", "degenerate", "delectable", "deliberate", "delirium",
-            "demagogue", "demeanor", "demure", "denigrate", "denizen", "depravity", "derivative", "dervish", "desecrate", "desiccate",
-            "desolate", "despicable", "destitute", "desultory", "detached", "detonate", "detrimental", "devious", "devotion", "dexterity",
-            "diabolical", "dialectic", "diaphanous", "dichotomy", "didactic", "diffident", "diffuse", "digression", "dilapidated", "diligent",
-            "dilute", "diminutive", "diorama", "diplomat", "dirge", "disarray", "discern", "discipline", "discourse", "discrepancy",
-            "discretion", "disdain", "disenchanted", "dishearten", "disingenuous", "dismal", "disparage", "disparate", "disseminate", "dissent",
-            "dissolution", "dissonant", "distend", "distill", "distortion", "distraught", "divergent", "divination", "divulge", "docile",
-            "doldrums", "dovetail", "draconian", "dubious", "dulcet", "duplicity", "durable", "dynamic", "dystopian", "ebullient",
-            "eccentric", "echelon", "eclectic", "eclipse", "ecstasy", "edifice", "efface", "effervescent", "effrontery", "effusive",
-            "egalitarian", "egregious", "elaborate", "elation", "eligible", "elliptical", "elocution", "elucidate", "elusive", "emanate",
-            "embellish", "embezzle", "emblematic", "emboss", "embrace", "embryonic", "eminent", "empathy", "empirical", "emulate",
-            "encomium", "endemic", "endure", "enervate", "enfeeble", "engender", "enigmatic", "enmity", "ennui", "ensemble",
-            "enthrall", "entice", "entrenched", "enumerate", "envelope", "envisage", "ephemeral", "epicurean", "epiphany", "epitome",
-            "equanimity", "equivocate", "eradicate", "erratic", "erudite", "escalate", "esoteric", "espionage", "ethereal", "ethical",
-            "euphonious", "euphoria", "evacuate", "evanescent", "evasive", "evocative", "exacerbate", "exactitude", "exasperate", "excavate",
-            "exemplary", "exhilarate", "exhort", "existential", "exonerate", "expanse", "expedient", "expertise", "expiate", "explicit",
-            "extol", "extravagant", "exuberant", "facade", "facetious", "facilitate", "facsimile", "factitious", "fallow", "fastidious",
-            "fatalistic", "fatuous", "fauna", "fecund", "felicitous", "ferocious", "fervent", "fickle", "fiduciary", "filigree",
-            "finesse", "firmament", "flagrant", "flamboyant", "fledgling", "flippant", "florid", "flotsam", "flourish", "flummox",
-            "foible", "foreshadow", "forge", "formidable", "fortitude", "fortuitous", "fractious", "fragile", "frantic", "fraternize",
-            "fraudulent", "frenetic", "fresco", "fretful", "frivolous", "frugal", "fulminate", "fulsome", "furlough", "furtive"
+            // First 50 words from original list - transformed
+            "dignified", "liberated", "justified", "wise", "courageous", "honest", "integrated", "loyal", "empathetic", "serene",
+            "patient", "humble", "creative", "innocent", "clarified", "mindful", "aware", "intuitive", "spiritual", "enlightened",
+            "tranquil", "curious", "ambitious", "motivated", "charismatic", "sincere", "generous", "compassionate", "forgiving", "tolerant",
+            "conscious", "moral", "ethical", "philosophical", "ideological", "nostalgic", "melancholic", "solitary", "longing", "desired",
+            "hopeful", "faithful", "destined", "fated", "infinite", "eternal", "mortal", "existing", "essential", "identified",
+            // 450 words from across the entire dictionary - transformed
+            "calculated", "abdicated", "aberrant", "abject", "abnormal", "abolished", "aboriginal", "abrasive", "abrogated", "absconded",
+            "acclaimed", "accumulated", "acerbic", "acquiesced", "acrobatic", "acronymic", "adamant", "admonished", "adumbrated", "adventurous",
+            "passionate", "agile", "agnostic", "soaring", "alchemical", "allegiant", "referenced", "woolly", "ambushed", "charmed",
+            "anagrammed", "anecdotal", "hostile", "opposing", "climactic", "ghostly", "scattered", "ardent", "adventurous", "catastrophic",
+            "crafted", "ascending", "asphyxiated", "astringent", "mapped", "atrophied", "audacious", "authentic", "avalanching", "averse",
+            "axiomatic", "babbled", "elevated", "ballasted", "flexible", "baroque", "fortified", "beatified", "chaotic", "gigantic",
+            "belligerent", "benefited", "bequeathed", "berserk", "bibliographic", "mathematical", "bioluminescent", "biospheric", "inherited", "blasphemous",
+            "blathered", "blithe", "boggled", "bombastic", "bourgeois", "brackish", "thorny", "brandished", "boastful", "glowing",
+            "breached", "brief", "bridled", "green", "bronzed", "bucolic", "stampeding", "protective", "buoyant", "burlesque",
+            "cadaverous", "rhythmic", "athletic", "callous", "slanderous", "friendly", "bright", "nominated", "shaded", "cantankerous",
+            "capacious", "capillary", "capitulated", "capricious", "captivated", "traveling", "cardinal", "spinning", "mapped", "cascading",
+            "castigated", "catalyzed", "catapulted", "catastrophic", "cathartic", "cathedral-like", "caustic", "cavalier", "celestial", "centrifugal",
+            "cerulean", "chagrined", "sacred", "chameleon-like", "championed", "illuminated", "chaotic", "deceptive", "gaping", "chastised",
+            "cherished", "deceptive", "chimeric", "chiseled", "chivalrous", "choreographed", "chromatic", "chronicled", "transformed", "encrypted",
+            "circuitous", "circumferenced", "fortified", "clairvoyant", "clandestine", "cleansed", "clichéd", "climaxed", "mechanical", "coalesced",
+            "cobalt", "cocooned", "coerced", "cognizant", "coherent", "colloquial", "colossal", "comatose", "combusted", "commendable",
+            "tumultuous", "comprehensive", "complacent", "complicit", "compunctious", "concentric", "conciliatory", "concocted", "channeled", "confluent",
+            "conglomerated", "appreciated", "consensual", "conspicuous", "stellar", "contagious", "contemplated", "contrite", "convivial", "copious",
+            "coquettish", "cordial", "abundant", "coronated", "corpulent", "corroborated", "corrosive", "cosmic", "countenanced", "courageous",
+            "covenanted", "craven", "crescent", "crestfallen", "crimson", "criteria-based", "critiqued", "tested", "cryptic", "crystallized",
+            "culminated", "culpable", "cultivated", "cumbersome", "cumulative", "greedy", "curated", "cursory", "pivotal", "custodial",
+            "poisonous", "cyclical", "cynical", "flirtatious", "patterned", "dappled", "disastrous", "debilitated", "debonair", "decadent",
+            "deciphered", "decorous", "decrepit", "deferential", "defiant", "deftly", "degenerated", "delectable", "deliberated", "delirious",
+            "demagogic", "behaved", "demure", "denigrated", "residing", "depraved", "derivative", "whirling", "desecrated", "desiccated",
+            "desolated", "despicable", "destituted", "desultory", "detached", "detonated", "detrimental", "devious", "devoted", "dexterous",
+            "diabolical", "dialectic", "diaphanous", "dichotomous", "didactic", "diffident", "diffused", "digressed", "dilapidated", "diligent",
+            "diluted", "diminutive", "displayed", "diplomatic", "mournful", "disarrayed", "discerned", "disciplined", "discoursed", "discrepant",
+            "discreet", "disdained", "disenchanted", "disheartened", "disingenuous", "dismal", "disparaged", "disparate", "disseminated", "dissented",
+            "dissolved", "dissonant", "distended", "distilled", "distorted", "distraught", "diverged", "divined", "divulged", "docile",
+            "stagnant", "dovetailed", "draconian", "dubious", "dulcet", "duplicitous", "endured", "dynamic", "dystopian", "ebullient",
+            "eccentric", "ranked", "eclectic", "eclipsed", "ecstatic", "constructed", "effaced", "effervescent", "brazen", "effusive",
+            "egalitarian", "egregious", "elaborated", "elated", "eligible", "elliptical", "eloquent", "elucidated", "elusive", "emanated",
+            "embellished", "embezzled", "emblematic", "embossed", "embraced", "embryonic", "eminent", "empathetic", "empirical", "emulated",
+            "praised", "endemic", "endured", "enervated", "enfeebled", "engendered", "enigmatic", "hostile", "bored", "performed",
+            "enthralled", "enticed", "entrenched", "enumerated", "enveloped", "envisaged", "ephemeral", "epicurean", "enlightened", "epitomized",
+            "balanced", "equivocated", "eradicated", "erratic", "erudite", "escalated", "esoteric", "spied", "ethereal", "ethical",
+            "euphonious", "euphoric", "evacuated", "evanescent", "evasive", "evocative", "exacerbated", "exact", "exasperated", "excavated",
+            "exemplary", "exhilarated", "exhorted", "existential", "exonerated", "expansive", "expedient", "expert", "expiated", "explicit",
+            "extolled", "extravagant", "exuberant", "facade-like", "facetious", "facilitated", "copied", "factitious", "fallow", "fastidious",
+            "fatalistic", "fatuous", "wild", "fecund", "felicitous", "ferocious", "fervent", "fickle", "trusted", "delicate",
+            "finessed", "celestial", "flagrant", "flamboyant", "fledgling", "flippant", "florid", "floating", "flourished", "flummoxed",
+            "flawed", "foreshadowed", "forged", "formidable", "fortified", "fortuitous", "fractious", "fragile", "frantic", "fraternized",
+            "fraudulent", "frenetic", "painted", "fretful", "frivolous", "frugal", "fulminated", "fulsome", "furloughed", "furtive"
         ];
 
         // Initialize the canvas
@@ -95,15 +95,37 @@
             return `hsl(${hue}, 70%, 60%)`;
         }
 
+        // Generate a random background color
+        function getRandomBackgroundColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 30%, 95%)`; // Light, subtle background
+        }
+
+        // Function to darken a color for text
+        function darkenColor(hslColor) {
+            // Extract HSL values
+            const match = hslColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+            if (match) {
+                const h = match[1];
+                const s = match[2];
+                const l = Math.max(25, parseInt(match[3]) - 30); // Darken by 30%, minimum 25%
+                return `hsl(${h}, ${s}%, ${l}%)`;
+            }
+            return 'black';
+        }
+
         // Draw the pie chart
         function drawPieChart() {
+            // Set random background color
+            document.body.style.backgroundColor = getRandomBackgroundColor();
+            
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Set pie chart dimensions
+            // Set pie chart dimensions - smaller radius to leave more room for labels
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const radius = Math.min(canvas.width, canvas.height) * 0.325; // 65% of smallest dimension
+            const radius = Math.min(canvas.width, canvas.height) * 0.25; // Reduced from 0.325 to 0.25
 
             // Generate number of sections (3-16)
             const sectionCount = Math.floor(Math.random() * 14) + 3;
@@ -163,24 +185,66 @@
                 ctx.fillStyle = colors[i];
                 ctx.fill();
                 
-                // Draw label line
-                const labelRadius = radius * 1.4;
-                const labelX = centerX + Math.cos(midAngle) * labelRadius;
-                const labelY = centerY + Math.sin(midAngle) * labelRadius;
+                // Calculate label position - further from center and within screen bounds
+                const labelStartRadius = radius * 1.05; // Start line just outside the pie
+                const labelEndRadius = radius * 1.8; // End line position - increased for more space
+                
+                // Calculate angles for label positioning
+                let labelAngle = midAngle;
+                
+                // Calculate initial label position
+                let labelEndX = centerX + Math.cos(labelAngle) * labelEndRadius;
+                let labelEndY = centerY + Math.sin(labelAngle) * labelEndRadius;
+                
+                // Check if label would go off screen and adjust
+                const margin = 100; // Increased margin from screen edge
+                if (labelEndX < margin) labelEndX = margin;
+                if (labelEndX > canvas.width - margin) labelEndX = canvas.width - margin;
+                if (labelEndY < margin) labelEndY = margin;
+                if (labelEndY > canvas.height - margin) labelEndY = canvas.height - margin;
+                
+                // Calculate text dimensions for positioning
+                const fontSize = Math.max(12, Math.min(canvas.width, canvas.height) * 0.02);
+                ctx.font = `${fontSize}px Arial`;
+                const textWidth = ctx.measureText(selectedWords[i]).width;
+                const textHeight = fontSize;
+                
+                // Calculate line end point that avoids overlapping with text
+                // Position line to connect to edge of text box, not center
+                let lineEndX, lineEndY;
+                
+                if (labelEndX < centerX) {
+                    // Text is on left side - connect line to right edge of text
+                    lineEndX = labelEndX + textWidth / 2 + 5;
+                } else {
+                    // Text is on right side - connect line to left edge of text
+                    lineEndX = labelEndX - textWidth / 2 - 5;
+                }
+                
+                if (labelEndY < centerY) {
+                    // Text is above center - connect line to bottom of text
+                    lineEndY = labelEndY + textHeight / 2 + 2;
+                } else {
+                    // Text is below center - connect line to top of text
+                    lineEndY = labelEndY - textHeight / 2 - 2;
+                }
+                
+                // Draw label line from pie edge to text edge (not center)
+                const lineStartX = centerX + Math.cos(midAngle) * labelStartRadius;
+                const lineStartY = centerY + Math.sin(midAngle) * labelStartRadius;
                 
                 ctx.beginPath();
-                ctx.moveTo(centerX + Math.cos(midAngle) * radius, centerY + Math.sin(midAngle) * radius);
-                ctx.lineTo(labelX, labelY);
-                ctx.strokeStyle = 'rgba(120, 120, 120, 0.6)';
-                ctx.lineWidth = 0.5;
+                ctx.moveTo(lineStartX, lineStartY);
+                ctx.lineTo(lineEndX, lineEndY);
+                ctx.strokeStyle = darkenColor(colors[i]); // Use darkened slice color for line
+                ctx.lineWidth = 1.5;
                 ctx.stroke();
                 
                 // Draw label text
-                ctx.font = '40px Arial';
-                ctx.fillStyle = 'black';
+                ctx.fillStyle = darkenColor(colors[i]); // Use darkened slice color for text
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(selectedWords[i], labelX, labelY);
+                ctx.fillText(selectedWords[i], labelEndX, labelEndY);
                 
                 // Update start angle for next section
                 startAngle = endAngle;
