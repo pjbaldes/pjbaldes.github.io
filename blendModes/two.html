@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stacked Kiosk Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        .iframe-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .layer-bottom {
+            z-index: 1;
+        }
+        
+        .layer-top {
+            z-index: 2;
+        }
+        
+        .blend-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="blend-indicator" id="blend-display">
+        Loading...
+    </div>
+    
+    <div class="iframe-container layer-bottom">
+        <iframe id="bottom-iframe" src="https://pjbaldes.github.io/kiosk.html"></iframe>
+    </div>
+    
+    <div class="iframe-container layer-top">
+        <iframe id="top-iframe" src="https://pjbaldes.github.io/kiosk.html"></iframe>
+    </div>
+
+    <script>
+        const blendModes = [
+            'multiply',
+            'screen',
+            'overlay',
+            'soft-light',
+            'hard-light',
+            'color-dodge',
+            'color-burn',
+            'darken',
+            'lighten',
+            'difference',
+            'exclusion',
+            'hue',
+            'saturation',
+            'color',
+            'luminosity'
+        ];
+
+        function getRandomBlendMode() {
+            return blendModes[Math.floor(Math.random() * blendModes.length)];
+        }
+
+        function getRandomOpacity() {
+            // Random opacity between 0.3 and 0.9 for good visibility
+            return (Math.random() * 0.6 + 0.3).toFixed(2);
+        }
+
+        function updateDisplay(mode, opacity) {
+            const display = document.getElementById('blend-display');
+            if (mode === 'normal') {
+                display.textContent = `Opacity: ${opacity}`;
+            } else {
+                display.textContent = `Blend: ${mode}`;
+            }
+        }
+
+        function applyRandomEffects() {
+            const topLayer = document.querySelector('.layer-top');
+            const useBlendMode = Math.random() > 0.5; // 50% chance for blend mode vs transparency
+            
+            if (useBlendMode) {
+                // Use blend mode with full opacity
+                const blendMode = getRandomBlendMode();
+                topLayer.style.mixBlendMode = blendMode;
+                topLayer.style.opacity = '1';
+                updateDisplay(blendMode, '1');
+                console.log('Applied blend mode:', blendMode);
+            } else {
+                // Use transparency with normal blend mode
+                const opacity = getRandomOpacity();
+                topLayer.style.mixBlendMode = 'normal';
+                topLayer.style.opacity = opacity;
+                updateDisplay('normal', opacity);
+                console.log('Applied opacity:', opacity);
+            }
+        }
+
+        // Apply initial random effects
+        applyRandomEffects();
+
+        // Change effects every 10 seconds for dynamic display
+        setInterval(applyRandomEffects, 10000);
+
+        // Optional: Click to manually change effects
+        document.addEventListener('click', applyRandomEffects);
+
+        // Prevent scrolling and context menu
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('wheel', e => e.preventDefault());
+        document.addEventListener('touchmove', e => e.preventDefault());
+    </script>
+</body>
+</html>

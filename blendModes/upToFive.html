@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Layer Kiosk Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        .iframe-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .layer-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            max-width: 300px;
+            line-height: 1.4;
+        }
+        
+        .layer-count {
+            color: #00ff00;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .layer-detail {
+            margin: 2px 0;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layer-info" id="layer-display">
+        <div class="layer-count">Layers: 0</div>
+    </div>
+
+    <script>
+        const blendModes = [
+            'multiply',
+            'screen',
+            'overlay',
+            'soft-light',
+            'hard-light',
+            'color-dodge',
+            'color-burn',
+            'darken',
+            'lighten',
+            'difference',
+            'exclusion',
+            'saturation',
+            'color',
+            'luminosity'
+        ];
+
+        let currentLayers = [];
+
+        function getRandomBlendMode() {
+            return blendModes[Math.floor(Math.random() * blendModes.length)];
+        }
+
+        function getRandomOpacity() {
+            return (Math.random() * 0.6 + 0.3).toFixed(2);
+        }
+
+        function getRandomLayerCount() {
+            return Math.floor(Math.random() * 5) + 1; // 1 to 5 layers
+        }
+
+        function createLayer(index) {
+            const container = document.createElement('div');
+            container.className = 'iframe-container';
+            container.style.zIndex = index + 1;
+            container.id = `layer-${index}`;
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://pjbaldes.github.io/kiosk.html';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            
+            container.appendChild(iframe);
+            document.body.appendChild(container);
+            
+            return container;
+        }
+
+        function applyRandomEffect(layer, index) {
+            const useBlendMode = Math.random() > 0.4; // 60% chance for blend mode
+            let effectInfo = {};
+            
+            if (useBlendMode && index > 0) { // Don't apply blend mode to bottom layer
+                const blendMode = getRandomBlendMode();
+                layer.style.mixBlendMode = blendMode;
+                layer.style.opacity = '1';
+                effectInfo = { type: 'blend', value: blendMode };
+            } else {
+                const opacity = index === 0 ? '1' : getRandomOpacity(); // Bottom layer always full opacity
+                layer.style.mixBlendMode = 'normal';
+                layer.style.opacity = opacity;
+                effectInfo = { type: 'opacity', value: opacity };
+            }
+            
+            return effectInfo;
+        }
+
+        function updateDisplay() {
+            const display = document.getElementById('layer-display');
+            const layerCount = currentLayers.length;
+            
+            let html = `<div class="layer-count">Layers: ${layerCount}</div>`;
+            
+            currentLayers.forEach((layerInfo, index) => {
+                const layerNum = index + 1;
+                if (layerInfo.effect.type === 'blend') {
+                    html += `<div class="layer-detail">L${layerNum}: ${layerInfo.effect.value}</div>`;
+                } else {
+                    html += `<div class="layer-detail">L${layerNum}: opacity ${layerInfo.effect.value}</div>`;
+                }
+            });
+            
+            display.innerHTML = html;
+        }
+
+        function clearLayers() {
+            // Remove all existing layers
+            currentLayers.forEach(layerInfo => {
+                if (layerInfo.element && layerInfo.element.parentNode) {
+                    layerInfo.element.parentNode.removeChild(layerInfo.element);
+                }
+            });
+            currentLayers = [];
+        }
+
+        function generateLayers() {
+            clearLayers();
+            
+            const layerCount = getRandomLayerCount();
+            console.log(`Generating ${layerCount} layers`);
+            
+            for (let i = 0; i < layerCount; i++) {
+                const layer = createLayer(i);
+                const effect = applyRandomEffect(layer, i);
+                
+                currentLayers.push({
+                    element: layer,
+                    effect: effect,
+                    index: i
+                });
+            }
+            
+            updateDisplay();
+        }
+
+        // Generate initial layers
+        generateLayers();
+
+        // Change layers every 15 seconds
+        setInterval(generateLayers, 15000);
+
+        // Click to manually change layers
+        document.addEventListener('click', generateLayers);
+
+        // Prevent scrolling and context menu
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('wheel', e => e.preventDefault());
+        document.addEventListener('touchmove', e => e.preventDefault());
+    </script>
+</body>
+</html>
