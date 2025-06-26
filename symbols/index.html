@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symmetric Grid</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.1s ease;
+        }
+        
+        .container {
+            width: 90vmin;
+            height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 0;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: min(80vh, 90vw);
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+        }
+        
+        .cell {
+            background: white;
+            transition: background-color 0.1s ease;
+            border-radius: 0;
+        }
+        
+        .cell.black {
+            background: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const body = document.body;
+        let cells = [];
+        let gridSize = 6;
+        
+        function createGrid(size) {
+            // Clear existing cells
+            grid.innerHTML = '';
+            cells = [];
+            gridSize = size;
+            
+            // Set grid template
+            grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${size}, 1fr)`;
+            
+            // Create new cells
+            for (let i = 0; i < size * size; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                grid.appendChild(cell);
+                cells.push(cell);
+            }
+        }
+        
+        function getIndex(row, col) {
+            return row * gridSize + col;
+        }
+        
+        function generatePattern() {
+            // Randomly choose grid size (even numbers only)
+            const sizes = [6, 8, 10];
+            const newSize = sizes[Math.floor(Math.random() * sizes.length)];
+            
+            if (newSize !== gridSize) {
+                createGrid(newSize);
+            }
+            
+            // Clear all cells
+            cells.forEach(cell => cell.classList.remove('black'));
+            
+            // Randomly choose symmetry type
+            const isHorizontal = Math.random() < 0.5;
+            const halfSize = gridSize / 2;
+            
+            if (isHorizontal) {
+                // Fill left half randomly, mirror to right half
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < halfSize; col++) {
+                        const isBlack = Math.random() < 0.5;
+                        const leftIndex = getIndex(row, col);
+                        const rightIndex = getIndex(row, gridSize - 1 - col);
+                        
+                        if (isBlack) {
+                            cells[leftIndex].classList.add('black');
+                            cells[rightIndex].classList.add('black');
+                        }
+                    }
+                }
+            } else {
+                // Fill top half randomly, mirror to bottom half
+                for (let row = 0; row < halfSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        const isBlack = Math.random() < 0.5;
+                        const topIndex = getIndex(row, col);
+                        const bottomIndex = getIndex(gridSize - 1 - row, col);
+                        
+                        if (isBlack) {
+                            cells[topIndex].classList.add('black');
+                            cells[bottomIndex].classList.add('black');
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Create initial grid
+        createGrid(6);
+        
+        // Set background color once
+        body.style.backgroundColor = Math.random() < 0.5 ? 'white' : 'black';
+        
+        // Generate initial pattern
+        generatePattern();
+        
+        // Refresh rapidly (every 200ms)
+        setInterval(generatePattern, 200);
+        
+        // Also refresh on click for interaction
+        grid.addEventListener('click', generatePattern);
+    </script>
+</body>
+</html>
