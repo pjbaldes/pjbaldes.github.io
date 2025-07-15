@@ -38,30 +38,9 @@
         .layer-top {
             z-index: 2;
         }
-        
-        .blend-indicator {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(5px);
-        }
     </style>
 </head>
 <body>
-    <div class="blend-indicator" id="blend-display">
-        Loading...
-    </div>
-    
     <div class="iframe-container layer-bottom">
         <iframe id="bottom-iframe" src="https://pjbaldes.github.io/kiosk.html"></iframe>
     </div>
@@ -98,15 +77,6 @@
             return (Math.random() * 0.6 + 0.3).toFixed(2);
         }
 
-        function updateDisplay(mode, opacity) {
-            const display = document.getElementById('blend-display');
-            if (mode === 'normal') {
-                display.textContent = `Opacity: ${opacity}`;
-            } else {
-                display.textContent = `Blend: ${mode}`;
-            }
-        }
-
         function applyRandomEffects() {
             const topLayer = document.querySelector('.layer-top');
             const useBlendMode = Math.random() > 0.5; // 50% chance for blend mode vs transparency
@@ -116,14 +86,12 @@
                 const blendMode = getRandomBlendMode();
                 topLayer.style.mixBlendMode = blendMode;
                 topLayer.style.opacity = '1';
-                updateDisplay(blendMode, '1');
                 console.log('Applied blend mode:', blendMode);
             } else {
                 // Use transparency with normal blend mode
                 const opacity = getRandomOpacity();
                 topLayer.style.mixBlendMode = 'normal';
                 topLayer.style.opacity = opacity;
-                updateDisplay('normal', opacity);
                 console.log('Applied opacity:', opacity);
             }
         }
