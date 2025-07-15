@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Millennial Doom Thoughts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Roboto:ital,wght@0,400;0,700;1,400;1,700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Text:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400;1,700&family=Montserrat:ital,wght@0,400;0,700;1,400;1,700" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: white;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .thought-bubble {
+            position: absolute;
+            padding: 20px 25px;
+            border-radius: 20px;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.4;
+            max-width: 300px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: fadeInFloat 4s ease-in-out;
+            z-index: 1;
+        }
+
+        .thought-bubble:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        /* Style 1: Black text on white bubble */
+        .bubble-white {
+            background: white;
+            color: black;
+            border: 2px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .bubble-white::before {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 30px;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            border-top-color: white;
+            border-bottom: 0;
+            margin-left: -15px;
+            margin-bottom: -2px;
+        }
+
+        .bubble-white::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 30px;
+            width: 0;
+            height: 0;
+            border: 12px solid transparent;
+            border-top-color: #333;
+            border-bottom: 0;
+            margin-left: -12px;
+        }
+
+        /* Style 2: White text on black bubble */
+        .bubble-black {
+            background: black;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50px;
+            position: relative;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        }
+
+        .bubble-black::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 25px;
+            width: 15px;
+            height: 15px;
+            background: black;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .bubble-black::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 35px;
+            width: 8px;
+            height: 8px;
+            background: black;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        @keyframes fadeInFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(50px) scale(0.8);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(-10px) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.9);
+            }
+        }
+
+        .floating-text {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            text-align: center;
+            z-index: 100;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const doomThoughts = [
+            "I'll never afford a house",
+            "My degree is worthless now",
+            "AI will take my job before I pay off student loans",
+            "The economy crashed again?",
+            "Retirement is a myth",
+            "ChatGPT writes better than I do",
+            "Avocado toast bankrupted me",
+            "Climate change will end everything anyway",
+            "My parents bought houses for $30k",
+            "The machines are learning too fast",
+            "LinkedIn influencers haunt my dreams",
+            "I'm 30 and live with roommates",
+            "AI art is replacing real artists",
+            "The housing market is broken forever",
+            "My coding bootcamp was a scam",
+            "Robots will be my retirement plan",
+            "Gig economy killed job security",
+            "The internet ruined everything",
+            "Student debt follows me to the grave",
+            "AI knows my search history",
+            "Minimum wage, maximum debt",
+            "The algorithm controls my mind",
+            "I can't afford therapy for my anxiety about AI",
+            "My data is worth more than my labor",
+            "The singularity is next Tuesday",
+            "Inflation ate my savings",
+            "AI girlfriends are cheaper than dating",
+            "The metaverse is just expensive depression",
+            "My job will be automated by lunchtime",
+            "Healthcare costs more than a house",
+            "AI wrote my resignation letter",
+            "The robots have better benefits",
+            "My carbon footprint is already doomed",
+            "TikTok knows me better than I know myself"
+        ];
+
+        const bubbleStyles = ['bubble-white', 'bubble-black'];
+        
+        const googleFonts = [
+            'Playfair Display',
+            'Roboto',
+            'Merriweather', 
+            'Open Sans',
+            'Lora',
+            'Poppins',
+            'Crimson Text',
+            'Source Sans Pro',
+            'Libre Baskerville',
+            'Montserrat'
+        ];
+
+        function createThoughtBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = `thought-bubble ${bubbleStyles[Math.floor(Math.random() * bubbleStyles.length)]}`;
+            
+            const thought = doomThoughts[Math.floor(Math.random() * doomThoughts.length)];
+            bubble.textContent = thought;
+            
+            // Random font
+            const randomFont = googleFonts[Math.floor(Math.random() * googleFonts.length)];
+            bubble.style.fontFamily = `"${randomFont}", serif`;
+            
+            // Random bold and italic
+            const isBold = Math.random() < 0.4; // 40% chance
+            const isItalic = Math.random() < 0.3; // 30% chance
+            
+            bubble.style.fontWeight = isBold ? 'bold' : 'normal';
+            bubble.style.fontStyle = isItalic ? 'italic' : 'normal';
+            
+            // Random position
+            const x = Math.random() * (window.innerWidth - 300);
+            const y = Math.random() * (window.innerHeight - 150);
+            
+            bubble.style.left = x + 'px';
+            bubble.style.top = y + 'px';
+            
+            // Random size variation
+            const scale = 0.8 + Math.random() * 0.4;
+            bubble.style.transform = `scale(${scale})`;
+            
+            document.body.appendChild(bubble);
+            
+            // Remove bubble after animation
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.parentNode.removeChild(bubble);
+                }
+            }, 4000);
+            
+            // Click to remove early
+            bubble.addEventListener('click', () => {
+                if (bubble.parentNode) {
+                    bubble.style.animation = 'none';
+                    bubble.style.opacity = '0';
+                    bubble.style.transform = 'scale(0)';
+                    setTimeout(() => {
+                        if (bubble.parentNode) {
+                            bubble.parentNode.removeChild(bubble);
+                        }
+                    }, 200);
+                }
+            });
+        }
+
+        // Create bubbles at random intervals
+        function startBubbleGeneration() {
+            setInterval(() => {
+                if (Math.random() < 0.7) { // 70% chance to create a bubble
+                    createThoughtBubble();
+                }
+            }, 1000 + Math.random() * 2000); // Every 1-3 seconds
+        }
+
+        // Start generating bubbles
+        startBubbleGeneration();
+        
+        // Create initial bubbles
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => createThoughtBubble(), i * 500);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // Remove bubbles that are now off-screen
+            const bubbles = document.querySelectorAll('.thought-bubble');
+            bubbles.forEach(bubble => {
+                const rect = bubble.getBoundingClientRect();
+                if (rect.left > window.innerWidth || rect.top > window.innerHeight) {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
