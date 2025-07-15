@@ -31,73 +31,10 @@
             width: 100%;
             height: 100%;
         }
-        
-        .controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 1000;
-            transition: opacity 1s ease-out;
-        }
-        
-        .controls.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .controls.fade-in {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        button {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            margin: 2px;
-        }
-        
-        button:hover {
-            background: #555;
-        }
-        
-        input[type="range"] {
-            width: 80px;
-        }
-        
-        input[type="number"] {
-            width: 40px;
-            padding: 2px;
-        }
     </style>
 </head>
 <body>
     <div id="gridContainer" class="grid-container"></div>
-    
-    <div class="controls">
-        <div>
-            <button onclick="toggleAllAnimations()">Pause/Resume All</button>
-            <button onclick="newColorsAll()">New Colors</button>
-        </div>
-        <div>
-            Rows: <input type="range" id="rowsSlider" min="1" max="50" value="3" onchange="updateGridFromSliders()">
-            <span id="rowsValue">3</span>
-        </div>
-        <div>
-            Cols: <input type="range" id="colsSlider" min="1" max="50" value="4" onchange="updateGridFromSliders()">
-            <span id="colsValue">4</span>
-        </div>
-        <div>Speed: <input type="range" id="speedSlider" min="1" max="10" value="2" onchange="updateAllSpeeds()"></div>
-        <div>Offset: <input type="checkbox" id="offsetCheckbox" onchange="updateGrid()"> Random Start (disabled)</div>
-    </div>
 
     <script>
         class WalkingTriangle {
@@ -182,21 +119,8 @@
                 this.animationId = requestAnimationFrame(() => this.animate());
             }
             
-            toggleAnimation() {
-                this.animationRunning = !this.animationRunning;
-                if (this.animationRunning) {
-                    this.animate();
-                } else {
-                    cancelAnimationFrame(this.animationId);
-                }
-            }
-            
             setSpeed(speed) {
                 this.step = speed;
-            }
-            
-            setRandomOffset() {
-                return;
             }
         }
         
@@ -204,10 +128,7 @@
         let globalBackgroundColor = '';
         let globalTriangleColor = '';
         let cycleCompleted = false;
-        let fadeTimeout;
-        let isInterfaceFaded = false;
-        let cyclesSinceLastMouse = 0;
-        let lastMouseTime = Date.now();
+        let autoRefreshTimeout;
         
         function generateGlobalColors() {
             const r1 = Math.floor(Math.random() * 256);
@@ -225,77 +146,35 @@
             if (!cycleCompleted) {
                 cycleCompleted = true;
                 
-                // Check if it's been long enough since last mouse activity
-                const timeSinceLastMouse = Date.now() - lastMouseTime;
-                const fiveSecondsInMs = 5000;
-                
-                if (timeSinceLastMouse > fiveSecondsInMs) {
-                    cyclesSinceLastMouse++;
-                } else {
-                    cyclesSinceLastMouse = 0; // Reset if mouse was active recently
-                }
-                
-                // After 10 cycles with no mouse action, reroll everything
-                if (cyclesSinceLastMouse >= 10) {
-                    cyclesSinceLastMouse = 0;
-                    setTimeout(() => {
-                        createRandomGrid();
-                    }, 100);
-                } else {
-                    // Just continue with current settings
-                    setTimeout(() => {
-                        cycleCompleted = false;
-                        // Reset all triangles to start new cycle
-                        triangles.forEach(triangle => {
-                            triangle.cycleCompleted = false;
-                        });
-                    }, 100);
-                }
+                setTimeout(() => {
+                    cycleCompleted = false;
+                    // Reset all triangles to start new cycle
+                    triangles.forEach(triangle => {
+                        triangle.cycleCompleted = false;
+                    });
+                }, 100);
             }
         }
         
         function createRandomGrid() {
-            const rows = Math.floor(Math.random() * 50) + 1;
-            const cols = Math.floor(Math.random() * 50) + 1;
-            
-            document.getElementById('rowsSlider').value = rows;
-            document.getElementById('colsSlider').value = cols;
-            document.getElementById('rowsValue').textContent = rows;
-            document.getElementById('colsValue').textContent = cols;
+            // Random grid size between 1-10 for both dimensions
+            const rows = Math.floor(Math.random() * 10) + 1;
+            const cols = Math.floor(Math.random() * 10) + 1;
             
             cycleCompleted = false;
-            createGrid();
-        }
-        
-        function fadeOutControls() {
-            clearTimeout(fadeTimeout);
-            fadeTimeout = setTimeout(() => {
-                const controls = document.querySelector('.controls');
-                controls.classList.add('fade-out');
-                controls.classList.remove('fade-in');
-                isInterfaceFaded = true;
-            }, 5000);
-        }
-        
-        function wakeUpInterface() {
-            lastMouseTime = Date.now(); // Update last mouse time
-            cyclesSinceLastMouse = 0; // Reset cycle counter on mouse activity
+            createGrid(rows, cols);
             
-            if (isInterfaceFaded) {
-                const controls = document.querySelector('.controls');
-                controls.classList.remove('fade-out');
-                controls.classList.add('fade-in');
-                isInterfaceFaded = false;
-            }
-            fadeOutControls();
+            // Schedule next refresh between 10-20 seconds
+            const refreshDelay = (Math.random() * 10 + 10) * 1000; // 10-20 seconds in milliseconds
+            clearTimeout(autoRefreshTimeout);
+            autoRefreshTimeout = setTimeout(createRandomGrid, refreshDelay);
         }
         
-        function createGrid() {
+        function createGrid(rows, cols) {
             const gridContainer = document.getElementById('gridContainer');
-            const rows = parseInt(document.getElementById('rowsSlider').value);
-            const cols = parseInt(document.getElementById('colsSlider').value);
-            const speed = parseInt(document.getElementById('speedSlider').value);
+            const speed = 2; // Fixed speed
             
+            // Clean up existing triangles
             triangles.forEach(triangle => {
                 if (triangle.animationId) {
                     cancelAnimationFrame(triangle.animationId);
@@ -326,43 +205,15 @@
             }
         }
         
-        function updateGridFromSliders() {
-            document.getElementById('rowsValue').textContent = document.getElementById('rowsSlider').value;
-            document.getElementById('colsValue').textContent = document.getElementById('colsSlider').value;
-            createGrid();
-        }
-        
-        function updateGrid() {
-            createGrid();
-        }
-        
-        function newColorsAll() {
-            generateGlobalColors();
-            triangles.forEach(triangle => {
-                triangle.container.style.backgroundColor = globalBackgroundColor;
-                triangle.triangle.setAttribute('fill', globalTriangleColor);
-            });
-        }
-        
-        function toggleAllAnimations() {
-            triangles.forEach(triangle => triangle.toggleAnimation());
-        }
-        
-        function updateAllSpeeds() {
-            const speed = parseInt(document.getElementById('speedSlider').value);
-            triangles.forEach(triangle => triangle.setSpeed(speed));
-        }
-        
         window.addEventListener('resize', () => {
-            setTimeout(createGrid, 100);
+            setTimeout(() => {
+                // Recreate grid with current random dimensions on resize
+                createRandomGrid();
+            }, 100);
         });
         
-        document.addEventListener('mousemove', wakeUpInterface);
-        document.addEventListener('mousedown', wakeUpInterface);
-        document.addEventListener('keydown', wakeUpInterface);
-        
-        createGrid();
-        fadeOutControls();
+        // Start the animation loop immediately
+        createRandomGrid();
     </script>
 </body>
 </html>
