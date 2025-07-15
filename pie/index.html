@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Pie Chart</title>
+    <title>Improved Multi-Chart Pie Display</title>
     <style>
         body {
             margin: 0;
@@ -82,7 +82,7 @@
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            drawPieChart();
+            drawCharts();
         }
 
         // Handle resizing
@@ -114,21 +114,10 @@
             return 'black';
         }
 
-        // Draw the pie chart
-        function drawPieChart() {
-            // Set random background color
-            document.body.style.backgroundColor = getRandomBackgroundColor();
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Set pie chart dimensions - smaller radius to leave more room for labels
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = Math.min(canvas.width, canvas.height) * 0.25; // Reduced from 0.325 to 0.25
-
-            // Generate number of sections (3-16)
-            const sectionCount = Math.floor(Math.random() * 14) + 3;
+        // Draw a single pie chart at specified position and size
+        function drawPieChart(centerX, centerY, radius, offsetX = 0, offsetY = 0) {
+            // Generate number of sections (2-8) - updated range
+            const sectionCount = Math.floor(Math.random() * 7) + 2;
             
             // Create array to hold section values
             let sections = [];
@@ -187,7 +176,7 @@
                 
                 // Calculate label position - further from center and within screen bounds
                 const labelStartRadius = radius * 1.05; // Start line just outside the pie
-                const labelEndRadius = radius * 1.8; // End line position - increased for more space
+                const labelEndRadius = radius * 1.8; // End line position
                 
                 // Calculate angles for label positioning
                 let labelAngle = midAngle;
@@ -197,51 +186,46 @@
                 let labelEndY = centerY + Math.sin(labelAngle) * labelEndRadius;
                 
                 // Check if label would go off screen and adjust
-                const margin = 100; // Increased margin from screen edge
+                const margin = 80;
                 if (labelEndX < margin) labelEndX = margin;
                 if (labelEndX > canvas.width - margin) labelEndX = canvas.width - margin;
                 if (labelEndY < margin) labelEndY = margin;
                 if (labelEndY > canvas.height - margin) labelEndY = canvas.height - margin;
                 
-                // Calculate text dimensions for positioning
-                const fontSize = Math.max(12, Math.min(canvas.width, canvas.height) * 0.02);
+                // Calculate text dimensions for positioning - increased font size
+                const fontSize = Math.max(14, Math.min(canvas.width, canvas.height) * 0.025); // Increased from 0.02 to 0.025
                 ctx.font = `${fontSize}px Arial`;
                 const textWidth = ctx.measureText(selectedWords[i]).width;
                 const textHeight = fontSize;
                 
                 // Calculate line end point that avoids overlapping with text
-                // Position line to connect to edge of text box, not center
                 let lineEndX, lineEndY;
                 
                 if (labelEndX < centerX) {
-                    // Text is on left side - connect line to right edge of text
                     lineEndX = labelEndX + textWidth / 2 + 5;
                 } else {
-                    // Text is on right side - connect line to left edge of text
                     lineEndX = labelEndX - textWidth / 2 - 5;
                 }
                 
                 if (labelEndY < centerY) {
-                    // Text is above center - connect line to bottom of text
                     lineEndY = labelEndY + textHeight / 2 + 2;
                 } else {
-                    // Text is below center - connect line to top of text
                     lineEndY = labelEndY - textHeight / 2 - 2;
                 }
                 
-                // Draw label line from pie edge to text edge (not center)
+                // Draw label line from pie edge to text edge
                 const lineStartX = centerX + Math.cos(midAngle) * labelStartRadius;
                 const lineStartY = centerY + Math.sin(midAngle) * labelStartRadius;
                 
                 ctx.beginPath();
                 ctx.moveTo(lineStartX, lineStartY);
                 ctx.lineTo(lineEndX, lineEndY);
-                ctx.strokeStyle = darkenColor(colors[i]); // Use darkened slice color for line
+                ctx.strokeStyle = darkenColor(colors[i]);
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
                 
                 // Draw label text
-                ctx.fillStyle = darkenColor(colors[i]); // Use darkened slice color for text
+                ctx.fillStyle = darkenColor(colors[i]);
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(selectedWords[i], labelEndX, labelEndY);
@@ -258,8 +242,61 @@
             ctx.stroke();
         }
 
+        // Main drawing function that handles multiple charts based on aspect ratio
+        function drawCharts() {
+            // Set random background color
+            document.body.style.backgroundColor = getRandomBackgroundColor();
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const aspectRatio = canvas.width / canvas.height;
+            const minDimension = Math.min(canvas.width, canvas.height);
+            
+            // Determine layout based on aspect ratio
+            if (aspectRatio > 1.8) {
+                // Very wide window - 3 charts horizontally
+                const chartRadius = minDimension * 0.18;
+                const spacing = canvas.width / 4;
+                
+                drawPieChart(spacing, canvas.height / 2, chartRadius);
+                drawPieChart(spacing * 2, canvas.height / 2, chartRadius);
+                drawPieChart(spacing * 3, canvas.height / 2, chartRadius);
+                
+            } else if (aspectRatio > 1.3) {
+                // Wide window - 2 charts horizontally
+                const chartRadius = minDimension * 0.22;
+                const spacing = canvas.width / 3;
+                
+                drawPieChart(spacing, canvas.height / 2, chartRadius);
+                drawPieChart(spacing * 2, canvas.height / 2, chartRadius);
+                
+            } else if (aspectRatio < 0.6) {
+                // Very tall window - 3 charts vertically
+                const chartRadius = minDimension * 0.18;
+                const spacing = canvas.height / 4;
+                
+                drawPieChart(canvas.width / 2, spacing, chartRadius);
+                drawPieChart(canvas.width / 2, spacing * 2, chartRadius);
+                drawPieChart(canvas.width / 2, spacing * 3, chartRadius);
+                
+            } else if (aspectRatio < 0.8) {
+                // Tall window - 2 charts vertically
+                const chartRadius = minDimension * 0.22;
+                const spacing = canvas.height / 3;
+                
+                drawPieChart(canvas.width / 2, spacing, chartRadius);
+                drawPieChart(canvas.width / 2, spacing * 2, chartRadius);
+                
+            } else {
+                // Square-ish window - single chart
+                const chartRadius = minDimension * 0.25;
+                drawPieChart(canvas.width / 2, canvas.height / 2, chartRadius);
+            }
+        }
+
         // Click to regenerate
-        canvas.addEventListener('click', drawPieChart);
+        canvas.addEventListener('click', drawCharts);
     </script>
 </body>
 </html>
