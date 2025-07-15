@@ -30,43 +30,9 @@
             height: 100%;
             border: none;
         }
-        
-        .layer-info {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(5px);
-            max-width: 300px;
-            line-height: 1.4;
-        }
-        
-        .layer-count {
-            color: #00ff00;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        
-        .layer-detail {
-            margin: 2px 0;
-            padding-left: 10px;
-        }
     </style>
 </head>
 <body>
-    <div class="layer-info" id="layer-display">
-        <div class="layer-count">Layers: 0</div>
-    </div>
-
     <script>
         const blendModes = [
             'multiply',
@@ -136,24 +102,6 @@
             return effectInfo;
         }
 
-        function updateDisplay() {
-            const display = document.getElementById('layer-display');
-            const layerCount = currentLayers.length;
-            
-            let html = `<div class="layer-count">Layers: ${layerCount}</div>`;
-            
-            currentLayers.forEach((layerInfo, index) => {
-                const layerNum = index + 1;
-                if (layerInfo.effect.type === 'blend') {
-                    html += `<div class="layer-detail">L${layerNum}: ${layerInfo.effect.value}</div>`;
-                } else {
-                    html += `<div class="layer-detail">L${layerNum}: opacity ${layerInfo.effect.value}</div>`;
-                }
-            });
-            
-            display.innerHTML = html;
-        }
-
         function clearLayers() {
             // Remove all existing layers
             currentLayers.forEach(layerInfo => {
@@ -180,8 +128,6 @@
                     index: i
                 });
             }
-            
-            updateDisplay();
         }
 
         // Generate initial layers
