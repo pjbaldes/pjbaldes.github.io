@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Random Walk</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            color: white;
+            font-size: 14px;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <div>3D Random Walk</div>
+            <button onclick="clearPath()">Clear Path</button>
+            <button onclick="togglePause()" id="pauseBtn">Pause</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer;
+        let path = [];
+        let cubes = [];
+        let x = 0, y = 0, z = 0;
+        let r = 10;
+        let rotationX = 0, rotationY = 0, rotationZ = 0;
+        let rotSpeedX = 0, rotSpeedY = 0.01, rotSpeedZ = 0;
+        let rotationChangeTimer = 0;
+        let isPaused = false;
+        let cubeMaterial, cubeGeometry;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 0, 200);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xffffff);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            document.getElementById('container').appendChild(renderer.domElement);
+            
+            cubeGeometry = new THREE.BoxGeometry(r, r, r);
+            cubeMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(100, 100, 50);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            window.addEventListener('resize', onWindowResize);
+            randomizeRotation();
+            animate();
+        }
+
+        function addCube() {
+            if (isPaused) {
+                return;
+            }
+            
+            const choice = Math.floor(Math.random() * 6);
+            
+            if (choice === 0) {
+                x += r;
+            } else if (choice === 1) {
+                x -= r;
+            } else if (choice === 2) {
+                y += r;
+            } else if (choice === 3) {
+                y -= r;
+            } else if (choice === 4) {
+                z += r;
+            } else if (choice === 5) {
+                z -= r;
+            }
+            
+            path.push(new THREE.Vector3(x, y, z));
+            
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial.clone());
+            cube.position.set(x, y, z);
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            
+            const edges = new THREE.EdgesGeometry(cubeGeometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000 }));
+            cube.add(line);
+            
+            scene.add(cube);
+            cubes.push(cube);
+            
+            if (cubes.length > 1000) {
+                const oldCube = cubes.shift();
+                scene.remove(oldCube);
+                path.shift();
+            }
+        }
+
+        function randomizeRotation() {
+            rotSpeedX = (Math.random() - 0.5) * 0.03;
+            rotSpeedY = (Math.random() - 0.5) * 0.03;
+            rotSpeedZ = (Math.random() - 0.5) * 0.03;
+            
+            if (Math.random() < 0.3) rotSpeedX = 0;
+            if (Math.random() < 0.3) rotSpeedY = 0;
+            if (Math.random() < 0.3) rotSpeedZ = 0;
+            
+            if (rotSpeedX === 0 && rotSpeedY === 0 && rotSpeedZ === 0) {
+                const randomAxis = Math.floor(Math.random() * 3);
+                const speed = (Math.random() - 0.5) * 0.02;
+                if (randomAxis === 0) rotSpeedX = speed;
+                else if (randomAxis === 1) rotSpeedY = speed;
+                else rotSpeedZ = speed;
+            }
+            
+            rotationChangeTimer = Math.random() * 300 + 100;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (Math.random() < 0.3) {
+                addCube();
+            }
+            
+            if (!isPaused) {
+                rotationChangeTimer--;
+                
+                if (rotationChangeTimer <= 0) {
+                    randomizeRotation();
+                }
+                
+                rotationX += rotSpeedX;
+                rotationY += rotSpeedY;
+                rotationZ += rotSpeedZ;
+                
+                scene.rotation.x = rotationX;
+                scene.rotation.y = rotationY;
+                scene.rotation.z = rotationZ;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        function clearPath() {
+            cubes.forEach(cube => scene.remove(cube));
+            cubes = [];
+            path = [];
+            x = 0;
+            y = 0;
+            z = 0;
+            rotationX = 0;
+            rotationY = 0;
+            rotationZ = 0;
+            scene.rotation.set(0, 0, 0);
+            randomizeRotation();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? 'Resume' : 'Pause';
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
