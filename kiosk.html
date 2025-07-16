@@ -1,289 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website Rotator for Raspberry Pi Kiosk</title>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-        #container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        #frame {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        #loading {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: sans-serif;
-            font-size: 24px;
-            z-index: 10;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Website Rotator for Raspberry Pi Kiosk</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    #frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    #loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      font-size: 24px;
+      z-index: 10;
+      text-align: center;
+      padding: 1em;
+    }
+  </style>
 </head>
 <body>
-    <div id="container">
-        <iframe id="frame" src="about:blank" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        <div id="loading">Loading website...</div>
-    </div>
+  <div id="container">
+    <iframe id="frame" src="about:blank" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <div id="loading">Loading website...</div>
+  </div>
 
-    <script>
-        // Configuration
-        const CONFIG_URL = 'https://pjbaldes.github.io/screensaver-config.json';
-        const MIN_REFRESH_TIME = 15; // seconds
-        const MAX_REFRESH_TIME = 120; // seconds
-        
-        // Fallback website list in case config can't be loaded
-        const FALLBACK_URLS = [
-            "https://www.timeanddate.com/worldclock/fullscreen.html",
-            "https://www.windy.com/-Satellite-satellite?satellite,40.213,6.855,5",
-            "https://earth.nullschool.net/",
-            "https://www.flightradar24.com/44.93,6.85/6",
-            "https://earth.google.com/web/@0,0,0a,22251752.77375655d,35y,0h,0t,0r"
-        ];
-        
-        let websiteList = [];
-        let currentIndex = -1;
-        let refreshTimer = null;
-        
-        // Debug mode - set to true to show console logs
-        const DEBUG = true;
-        
-        // Logger function
-        function log(...args) {
-            if (DEBUG) {
-                console.log(...args);
-                
-                // Also show on screen for debugging
-                const loading = document.getElementById('loading');
-                if (loading) {
-                    loading.innerHTML += "<br>" + args.join(' ');
-                }
-            }
+  <script>
+    const CONFIG_URL = 'https://pjbaldes.github.io/screensaver-config.json';
+    const MIN_REFRESH_TIME = 15;
+    const MAX_REFRESH_TIME = 120;
+    const DEBUG = true;
+
+    let websiteList = [];
+    let currentIndex = -1;
+    let refreshTimer = null;
+
+    function log(...args) {
+      if (DEBUG) {
+        console.log(...args);
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.innerHTML += "<br>" + args.join(' ');
         }
+      }
+    }
 
-        // Function to get a random integer between min and max (inclusive)
-        function getRandomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
+    function getSecureRandomInt(min, max) {
+      const range = max - min + 1;
+      const maxRange = 0xFFFFFFFF;
+      const array = new Uint32Array(1);
+      let randomNumber;
+      do {
+        window.crypto.getRandomValues(array);
+        randomNumber = array[0];
+      } while (randomNumber > maxRange - (maxRange % range));
+      return min + (randomNumber % range);
+    }
+
+    function selectRandomWebsite() {
+      if (websiteList.length === 0) return null;
+      let newIndex;
+      do {
+        newIndex = getSecureRandomInt(0, websiteList.length - 1);
+      } while (newIndex === currentIndex && websiteList.length > 1);
+      currentIndex = newIndex;
+      log(`Selected website index ${currentIndex}: ${websiteList[currentIndex].url}`);
+      return websiteList[currentIndex];
+    }
+
+    function loadWebsite(url) {
+      const frame = document.getElementById('frame');
+      const loading = document.getElementById('loading');
+      loading.style.display = 'flex';
+      loading.innerHTML = `Loading: ${url}`;
+      log(`Loading website: ${url}`);
+      frame.src = url;
+
+      frame.onload = function() {
+        log(`Website loaded successfully: ${url}`);
+        loading.style.display = 'none';
+      };
+
+      frame.onerror = function(e) {
+        log(`Error loading website: ${url}`, e);
+        loading.innerHTML = `Error loading site. Refreshing...`;
+        setTimeout(() => {
+          window.location.reload();
+        }, 30000); // wait 30 seconds then refresh
+      };
+
+      // safety fallback in case iframe fails silently
+      setTimeout(() => {
+        loading.style.display = 'none';
+      }, 10000);
+    }
+
+    function scheduleNextRefresh() {
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+      const refreshTime = getSecureRandomInt(MIN_REFRESH_TIME, MAX_REFRESH_TIME) * 1000;
+      log(`Next refresh in ${refreshTime / 1000} seconds`);
+      refreshTimer = setTimeout(() => {
+        const website = selectRandomWebsite();
+        if (website) {
+          loadWebsite(website.url);
         }
+        scheduleNextRefresh();
+      }, refreshTime);
+    }
 
-        // Function to select a random website from the list
-        function selectRandomWebsite() {
-            if (websiteList.length === 0) return null;
-            
-            // Ensure we don't show the same site twice in a row
-            let newIndex;
-            do {
-                newIndex = Math.floor(Math.random() * websiteList.length);
-            } while (newIndex === currentIndex && websiteList.length > 1);
-            
-            currentIndex = newIndex;
-            log(`Selected website index ${currentIndex}: ${websiteList[currentIndex].url}`);
-            return websiteList[currentIndex];
-        }
-
-        // Function to load a website into the iframe
-        function loadWebsite(url) {
-            const frame = document.getElementById('frame');
-            const loading = document.getElementById('loading');
-            
-            // Show loading screen
-            loading.style.display = 'flex';
-            loading.innerHTML = `Loading: ${url}`;
-            
-            log(`Loading website: ${url}`);
-            
-            // Load the website
-            frame.src = url;
-            
-            // Hide loading screen when iframe loads
-            frame.onload = function() {
-                log(`Website loaded successfully: ${url}`);
-                loading.style.display = 'none';
-            };
-            
-            // Handle errors
-            frame.onerror = function(e) {
-                log(`Error loading website: ${url}`, e);
-                // Hide loading after a timeout anyway
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                }, 5000);
-            };
-            
-            // Set timeout for errors (in case iframe fails to load)
-            setTimeout(() => {
-                loading.style.display = 'none';
-            }, 10000);
-        }
-
-        // Function to schedule the next refresh
-        function scheduleNextRefresh() {
-            // Clear any existing timer
-            if (refreshTimer) {
-                clearTimeout(refreshTimer);
-            }
-            
-            // Generate random refresh time
-            const refreshTime = getRandomInt(MIN_REFRESH_TIME, MAX_REFRESH_TIME) * 1000;
-            log(`Next refresh in ${refreshTime/1000} seconds`);
-            
-            // Schedule next refresh
-            refreshTimer = setTimeout(() => {
-                const website = selectRandomWebsite();
-                if (website) {
-                    loadWebsite(website.url);
-                }
-                scheduleNextRefresh();
-            }, refreshTime);
-        }
-
-        // Function to fetch the configuration from the JSON file
-        async function fetchConfig() {
-            log('Attempting to fetch config from:', CONFIG_URL);
-            
-            try {
-                // Try different methods to fetch the config
-                let response;
-                let data;
-                
-                try {
-                    // Method 1: Regular fetch with credentials
-                    log('Trying fetch method 1: Regular fetch');
-                    response = await fetch(CONFIG_URL, {
-                        mode: 'cors',
-                        cache: 'no-cache',
-                        credentials: 'omit',
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch config: ${response.status}`);
-                    }
-                    
-                    const responseText = await response.text();
-                    log('Received response:', responseText.substring(0, 100) + '...');
-                    data = JSON.parse(responseText);
-                } catch (fetchError) {
-                    log('Regular fetch failed, trying XMLHttpRequest approach:', fetchError);
-                    
-                    // Method 2: Use XMLHttpRequest as backup
-                    data = await new Promise((resolve, reject) => {
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('GET', CONFIG_URL, true);
-                        xhr.responseType = 'json';
-                        xhr.onload = function() {
-                            if (xhr.status === 200) {
-                                log('XHR successful');
-                                resolve(xhr.response);
-                            } else {
-                                log('XHR failed with status:', xhr.status);
-                                reject(new Error('XHR failed: ' + xhr.status));
-                            }
-                        };
-                        xhr.onerror = function(e) {
-                            log('XHR network error:', e);
-                            reject(new Error('XHR network error'));
-                        };
-                        xhr.send();
-                    });
-                }
-                
-                // Process the data
-                if (data && Array.isArray(data.urls)) {
-                    // Convert the simple URL array to our website object format
-                    websiteList = data.urls.map(url => ({ url }));
-                    log(`Successfully loaded ${websiteList.length} websites from config`);
-                } else {
-                    log('Invalid config format or empty data', data);
-                    throw new Error('Invalid config format');
-                }
-            } catch (error) {
-                log('Error loading config:', error);
-                
-                // Use fallback URLs
-                log('Using fallback URL list');
-                websiteList = FALLBACK_URLS.map(url => ({ url }));
-                
-                // Try again in 2 minutes
-                setTimeout(fetchConfig, 120000);
-            }
-            
-            // Start the rotation if it hasn't started yet
-            if (currentIndex === -1) {
-                log('Starting website rotation');
-                const website = selectRandomWebsite();
-                if (website) {
-                    loadWebsite(website.url);
-                }
-                scheduleNextRefresh();
-            }
-        }
-
-        // Static embedded config in case network is unavailable
-        const EMBEDDED_CONFIG = {
-            "urls": [
-                "https://www.timeanddate.com/worldclock/fullscreen.html",
-                "https://www.windy.com/-Satellite-satellite?satellite,40.213,6.855,5",
-                "https://earth.nullschool.net/",
-                "https://www.flightradar24.com/44.93,6.85/6",
-                "https://earth.google.com/web/@0,0,0a,22251752.77375655d,35y,0h,0t,0r",
-                "https://anvaka.github.io/pm/#/galaxy/npm",
-                "https://stars.chromeexperiments.com/",
-                "https://www.youtube.com/embed/86YLFOog4GM?autoplay=1&controls=0&showinfo=0&rel=0",
-                "https://www.youtube.com/embed/4993sBLAzGA?autoplay=1&controls=0&showinfo=0&rel=0",
-                "https://www.shadertoy.com/embed/3l23Rh?gui=false&paused=false&muted=true",
-                "https://particle-love.com/"
-            ]
-        };
-
-        // Initialize on page load
-        window.addEventListener('load', function() {
-            log('Page loaded, initializing...');
-            
-            // First try loading from the remote JSON
-            fetchConfig().catch(error => {
-                log('Failed to fetch remote config, using embedded config:', error);
-                
-                // If that fails completely, use the embedded config
-                websiteList = EMBEDDED_CONFIG.urls.map(url => ({ url }));
-                
-                // Start rotation if not already started
-                if (currentIndex === -1) {
-                    const website = selectRandomWebsite();
-                    if (website) {
-                        loadWebsite(website.url);
-                    }
-                    scheduleNextRefresh();
-                }
-            });
+    async function fetchConfig() {
+      log('Fetching config from:', CONFIG_URL);
+      try {
+        const response = await fetch(CONFIG_URL, {
+          mode: 'cors',
+          cache: 'no-cache',
+          credentials: 'omit',
+          headers: {
+            'Accept': 'application/json'
+          }
         });
 
-        // Reload the page every hour to refresh the config and avoid memory leaks
+        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+
+        const text = await response.text();
+        log('Received response:', text.substring(0, 100) + '...');
+        const data = JSON.parse(text);
+
+        if (data && Array.isArray(data.urls)) {
+          websiteList = data.urls.map(url => ({ url }));
+          log(`Loaded ${websiteList.length} websites`);
+        } else {
+          throw new Error('Invalid config format');
+        }
+      } catch (err) {
+        log('Config load failed:', err);
+        const loading = document.getElementById('loading');
+        loading.innerHTML = `Failed to load config. Refreshing in 30 seconds...`;
         setTimeout(() => {
-            log('Refreshing page after 1 hour to prevent memory leaks');
-            window.location.reload();
-        }, 3600000); // 1 hour
-    </script>
+          window.location.reload();
+        }, 30000);
+        return;
+      }
+
+      if (currentIndex === -1) {
+        log('Starting website rotation');
+        const website = selectRandomWebsite();
+        if (website) {
+          loadWebsite(website.url);
+        }
+        scheduleNextRefresh();
+      }
+    }
+
+    window.addEventListener('load', function () {
+      log('Page loaded, initializing...');
+      fetchConfig();
+    });
+
+    // Refresh every hour to prevent memory issues
+    setTimeout(() => {
+      log('Refreshing page after 1 hour');
+      window.location.reload();
+    }, 3600000);
+  </script>
 </body>
 </html>
