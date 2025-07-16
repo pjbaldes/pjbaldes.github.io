@@ -19,6 +19,12 @@ function setup() {
   
   // Continue loading the rest of the images after setup
   loadRemainingImages();
+  
+  // Add initial images immediately - no delay!
+  addRandomImages();
+  
+  // Set the timer to current time so next automatic image appears after full interval
+  lastImageTime = millis();
 }
 
 function loadRemainingImages() {
@@ -45,8 +51,9 @@ function loadRemainingImages() {
     currentBatch = endIndex;
     
     // If there are more images to load, schedule the next batch
+    // Reduced delay from 1000ms to 100ms for faster loading
     if (currentBatch < totalImages) {
-      setTimeout(loadBatch, 1000); // Wait a second before loading the next batch
+      setTimeout(loadBatch, 100);
     }
   }
   
