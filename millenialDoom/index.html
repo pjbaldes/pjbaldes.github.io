@@ -1,352 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Millennial Doom Thoughts</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Roboto:ital,wght@0,400;0,700;1,400;1,700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Text:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400;1,700&family=Montserrat:ital,wght@0,400;0,700;1,400;1,700" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Millennial Doom Thoughts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Roboto&family=Merriweather&family=Open+Sans&family=Lora&family=Poppins&family=Crimson+Text&family=Source+Sans+Pro&family=Libre+Baskerville&family=Montserrat" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            background: white;
-            min-height: 100vh;
-            overflow: hidden;
-            position: relative;
-        }
+    body {
+      background: white;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
 
-        .thought-bubble {
-            position: absolute;
-            max-width: 300px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            animation: fadeInFloat 4s ease-in-out;
-            z-index: 1;
-        }
+    .thought-bubble {
+      position: absolute;
+      max-width: 420px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      animation: fadeInFloat 6s ease-in-out;
+      z-index: 1;
+    }
 
-        .thought-bubble:hover {
-            transform: scale(1.05);
-            filter: brightness(1.1);
-        }
+    .thought-bubble:hover {
+      transform: scale(1.05);
+      filter: brightness(1.1);
+    }
 
-        .bubble-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 16px;
-            line-height: 1.4;
-            text-align: center;
-            padding: 15px;
-            width: 90%;
-            pointer-events: none;
-            font-weight: 500;
-        }
+    .bubble-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      line-height: 1.4;
+      text-align: center;
+      padding: 21px;
+      width: 90%;
+      pointer-events: none;
+      font-weight: 500;
+    }
 
-        .bubble-content.text-on-white {
-            color: #111;
-            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
-        }
+    .bubble-content.text-on-white {
+      color: #111;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+    }
 
-        .bubble-content.text-on-black {
-            color: #fff;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
-        }
+    .bubble-content.text-on-black {
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
+    }
 
-        @keyframes fadeInFloat {
-            0% {
-                opacity: 0;
-                transform: translateY(50px) scale(0.8);
-            }
-            10% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            90% {
-                opacity: 1;
-                transform: translateY(-10px) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-30px) scale(0.9);
-            }
-        }
+    @keyframes fadeInFloat {
+      0% {
+        opacity: 0;
+        transform: translateY(80px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translateY(-30px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-70px) scale(0.9);
+      }
+    }
 
-        .floating-text {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 18px;
-            text-align: center;
-            z-index: 100;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .svg-bubble {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 4px 15px rgba(0,0,0,0.2));
-        }
-    </style>
+    .svg-bubble {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 4px 15px rgba(0,0,0,0.2));
+    }
+  </style>
 </head>
 <body>
-
-    <script>
-        const doomThoughts = [
-            "I'll never afford a house",
-            "sam altman is starting a nuclear power company",
+<script>
+const doomThoughts = [
+  "I'll never afford a house",
+  "my degree is worthless",
+  "will AI pay off student loans?",
+  "The economy crashed again?",
+  "retirement is a myth",
+  "ChatGPT writes better than I do",
+  "avocado toast bankrupted me",
+  "Climate change will end everything anyway",
+  "My parents bought houses for $30k",
+  "The machines are learning too fast",
+  "LinkedIn influencers haunt my dreams",
+  "I'm 30 and live with roommates",
+  "AI art is replacing real artists",
+  "The housing market is broken forever",
+  "My coding bootcamp was a scam",
+  "Robots will be my retirement plan",
+  "Gig economy killed job security",
+  "The internet ruined everything",
+  "Student debt follows me to the grave",
+  "AI knows my search history",
+  "Minimum wage, maximum debt",
+  "The algorithm controls my mind",
+  "I can't afford therapy for my anxiety about AI",
+  "My data is worth more than my labor",
+  "The singularity is next Tuesday",
+  "Inflation ate my savings",
+  "AI girlfriends are cheaper than dating",
+  "The metaverse is just expensive depression",
+  "My job will be automated by lunchtime",
+  "Healthcare costs more than a house",
+  "AI wrote my resignation letter",
+  "The robots have better benefits",
+  "My carbon footprint is already doomed",
+  "TikTok knows me better than I know myself",
+  "i dont want to talk about ai anymore",
+  "I tip more than I save",
+  "I can't tell if I'm burned out or obsolete",
+  "My boss thinks emojis are work culture",
+  "I own nothing and subscribe to everything",
+  "I learned to code just in time for AI to do it better",
+  "I missed the window for crypto and real estate",
+  "Capitalism is my love language now",
+  "My resume is optimized for robots",
+  "I'm nostalgic for 2010s nihilism",
+  "My fridge has WiFi but I can't afford eggs",
+     "I'll never afford a house",
             "My degree is worthless now",
-            "i broke my bootstraps",
-            "I'll never pay off my student loans",
-            "the economy crashed again?",
-            "retirement is a boomer myth",
+            "AI will take my job before I pay off student loans",
+            "The economy crashed again?",
+            "Retirement is a myth",
             "ChatGPT writes better than I do",
-            "Avocado toast will bankrupt me",
+            "Avocado toast bankrupted me",
             "Climate change will end everything anyway",
             "My parents bought houses for $30k",
             "The machines are learning too fast",
             "LinkedIn influencers haunt my dreams",
-            "I'm 305 and have two roommates",
-            "AI art is not art",
-            "The housing market is broken forever",
+            "I'm 30 and live with 3 roommates",
+            "AI art is meh",
+            "The housing market is broken ",
             "My coding bootcamp was a scam",
-            "Robots will be my retirement plan",
-            "I'll drive uber and doordash",
+            "Robots will be take my retirement plan",
             "Gig economy killed job security",
             "The internet ruined everything",
-            "Student debt is my companion",
-            "my search history",
-            "Minimum wage til retirement age",
-            "The algorithm is my mind",
-            "I can't afford therapy for my anxiety",
-            "My data is my labor",
-            "The singularity came and went",
-            "thanks inflation",
-            "AI girlfriends are cheaper",
-            "The metaverse is expensive depression",
+            "Student debt follows me to the grave",
+            "AI knows my search history",
+            "Minimum wage, maximum debt",
+            "The algorithm controls my mind",
+            "I can't afford therapy for my anxiety about AI",
+            "My data is worth more than my labor",
+            "The singularity is next Tuesday",
+            "Inflation ate my savings",
+            "AI girlfriends are cheaper than dating",
+            "The metaverse is just expensive depression",
             "My job will be automated by lunchtime",
-            "Healthcare costs are killing us",
+            "Healthcare costs is killing me",
             "AI wrote my resignation letter",
             "The robots have better benefits",
-            "My carbon footprint is large",
-            "TikTok knows ",
+            "My carbon footprint...",
+            "TikTok knows me better than I know myself",
             "i dont want to talk about ai anymore"
-        ];
+];
 
-        const svgBubbles = [
-            // Classic thought bubble
-            {
-                name: 'classic',
-                svg: `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="150" cy="100" rx="140" ry="80" fill="white" stroke="#333" stroke-width="2"/>
-                    <circle cx="80" cy="170" r="15" fill="white" stroke="#333" stroke-width="2"/>
-                    <circle cx="50" cy="185" r="8" fill="white" stroke="#333" stroke-width="2"/>
-                </svg>`,
-                textColor: 'black'
-            },
-            
-            // Elliptical bubble
-            {
-                name: 'ellipse',
-                svg: `<svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="140" cy="80" rx="130" ry="70" fill="black" stroke="white" stroke-width="2"/>
-                    <ellipse cx="60" cy="140" rx="12" ry="8" fill="black" stroke="white" stroke-width="2"/>
-                    <ellipse cx="35" cy="150" rx="6" ry="4" fill="black" stroke="white" stroke-width="2"/>
-                </svg>`,
-                textColor: 'white'
-            },
-            
-            // Rectangle with rounded corners
-            {
-                name: 'rounded-rect',
-                svg: `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="20" y="20" width="260" height="120" rx="30" ry="30" fill="white" stroke="#333" stroke-width="2"/>
-                    <polygon points="70,140 90,165 110,140" fill="white" stroke="#333" stroke-width="2"/>
-                </svg>`,
-                textColor: 'black'
-            },
-            
-            // Cloud-like bubble
-            {
-                name: 'cloud',
-                svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="80" cy="100" r="50" fill="black" stroke="white" stroke-width="2"/>
-                    <circle cx="140" cy="80" r="60" fill="black" stroke="white" stroke-width="2"/>
-                    <circle cx="200" cy="90" r="45" fill="black" stroke="white" stroke-width="2"/>
-                    <circle cx="240" cy="120" r="40" fill="black" stroke="white" stroke-width="2"/>
-                    <circle cx="160" cy="130" r="55" fill="black" stroke="white" stroke-width="2"/>
-                    <circle cx="90" cy="160" r="12" fill="black" stroke="white" stroke-width="2"/>
-                    <circle cx="65" cy="175" r="6" fill="black" stroke="white" stroke-width="2"/>
-                </svg>`,
-                textColor: 'white'
-            },
-            
-            // Asymmetric organic bubble
-            {
-                name: 'organic',
-                svg: `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 100 Q20 60 80 40 Q160 20 220 50 Q280 80 260 130 Q240 180 160 170 Q80 160 50 100 Z" fill="white" stroke="#333" stroke-width="2"/>
-                    <circle cx="80" cy="170" r="10" fill="white" stroke="#333" stroke-width="2"/>
-                    <circle cx="55" cy="185" r="5" fill="white" stroke="#333" stroke-width="2"/>
-                </svg>`,
-                textColor: 'black'
-            },
-            
-            // Sharp angular bubble
-            {
-                name: 'angular',
-                svg: `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="30,30 270,30 290,60 280,130 250,160 50,160 20,130 10,60" fill="black" stroke="white" stroke-width="2"/>
-                    <polygon points="70,160 85,180 100,160" fill="black" stroke="white" stroke-width="2"/>
-                </svg>`,
-                textColor: 'white'
-            },
-            
-            // Spiky thought bubble
-            {
-                name: 'spiky',
-                svg: `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M160 40 L180 20 L200 40 L220 30 L240 50 L260 40 L280 60 L270 80 L290 100 L270 120 L280 140 L260 160 L240 150 L220 170 L200 160 L180 180 L160 160 L140 180 L120 160 L100 170 L80 150 L60 160 L40 140 L50 120 L30 100 L50 80 L40 60 L60 40 L80 50 L100 30 L120 40 L140 20 Z" fill="white" stroke="#333" stroke-width="2"/>
-                    <circle cx="90" cy="175" r="8" fill="white" stroke="#333" stroke-width="2"/>
-                    <circle cx="70" cy="190" r="4" fill="white" stroke="#333" stroke-width="2"/>
-                </svg>`,
-                textColor: 'black'
-            }
-        ];
-        
-        const googleFonts = [
-            'Playfair Display',
-            'Roboto',
-            'Merriweather', 
-            'Open Sans',
-            'Lora',
-            'Poppins',
-            'Crimson Text',
-            'Source Sans Pro',
-            'Libre Baskerville',
-            'Montserrat'
-        ];
+const googleFonts = [
+  'Playfair Display', 'Roboto', 'Merriweather', 'Open Sans',
+  'Lora', 'Poppins', 'Crimson Text', 'Source Sans Pro',
+  'Libre Baskerville', 'Montserrat'
+];
 
-        function createThoughtBubble() {
-            const bubble = document.createElement('div');
-            bubble.className = 'thought-bubble';
-            
-            // Select random SVG bubble
-            const selectedBubble = svgBubbles[Math.floor(Math.random() * svgBubbles.length)];
-            
-            // Create SVG container
-            const svgContainer = document.createElement('div');
-            svgContainer.innerHTML = selectedBubble.svg;
-            svgContainer.className = 'svg-bubble';
-            
-            // Create text content
-            const textContent = document.createElement('div');
-            textContent.className = `bubble-content text-on-${selectedBubble.textColor === 'white' ? 'black' : 'white'}`;
-            
-            const thought = doomThoughts[Math.floor(Math.random() * doomThoughts.length)];
-            textContent.textContent = thought;
-            
-            // Random font and sizing
-            const randomFont = googleFonts[Math.floor(Math.random() * googleFonts.length)];
-            textContent.style.fontFamily = `"${randomFont}", serif`;
-            
-            // Random bold and italic
-            const isBold = Math.random() < 0.4; // 40% chance
-            const isItalic = Math.random() < 0.3; // 30% chance
-            
-            textContent.style.fontWeight = isBold ? 'bold' : '500';
-            textContent.style.fontStyle = isItalic ? 'italic' : 'normal';
-            
-            // Adjust font size based on text length for better readability
-            const textLength = thought.length;
-            let fontSize = 16;
-            if (textLength > 60) fontSize = 14;
-            else if (textLength > 40) fontSize = 15;
-            else if (textLength < 20) fontSize = 18;
-            
-            textContent.style.fontSize = fontSize + 'px';
-            
-            // Assemble bubble
-            bubble.appendChild(svgContainer);
-            bubble.appendChild(textContent);
-            
-            // Random position
-            const x = Math.random() * (window.innerWidth - 320);
-            const y = Math.random() * (window.innerHeight - 200);
-            
-            bubble.style.left = x + 'px';
-            bubble.style.top = y + 'px';
-            
-            // Random size variation
-            const scale = 0.7 + Math.random() * 0.5;
-            bubble.style.transform = `scale(${scale})`;
-            
-            // Set size based on SVG viewBox
-            bubble.style.width = '320px';
-            bubble.style.height = '200px';
-            
-            document.body.appendChild(bubble);
-            
-            // Remove bubble after animation
-            setTimeout(() => {
-                if (bubble.parentNode) {
-                    bubble.parentNode.removeChild(bubble);
-                }
-            }, 4000);
-            
-            // Click to remove early
-            bubble.addEventListener('click', () => {
-                if (bubble.parentNode) {
-                    bubble.style.animation = 'none';
-                    bubble.style.opacity = '0';
-                    bubble.style.transform = 'scale(0)';
-                    setTimeout(() => {
-                        if (bubble.parentNode) {
-                            bubble.parentNode.removeChild(bubble);
-                        }
-                    }, 200);
-                }
-            });
-        }
+const svgBubbles = [
+  {
+    svg: `<svg viewBox="0 0 300 200"><ellipse cx="150" cy="100" rx="140" ry="80" fill="white" stroke="#333" stroke-width="2"/><circle cx="80" cy="170" r="15" fill="white" stroke="#333" stroke-width="2"/><circle cx="50" cy="185" r="8" fill="white" stroke="#333" stroke-width="2"/></svg>`,
+    textColor: 'black'
+  },
+  {
+    svg: `<svg viewBox="0 0 280 160"><ellipse cx="140" cy="80" rx="130" ry="70" fill="black" stroke="white" stroke-width="2"/><ellipse cx="60" cy="140" rx="12" ry="8" fill="black" stroke="white" stroke-width="2"/><ellipse cx="35" cy="150" rx="6" ry="4" fill="black" stroke="white" stroke-width="2"/></svg>`,
+    textColor: 'white'
+  }
+];
 
-        // Create bubbles at random intervals
-        function startBubbleGeneration() {
-            setInterval(() => {
-                if (Math.random() < 0.7) { // 70% chance to create a bubble
-                    createThoughtBubble();
-                }
-            }, 1000 + Math.random() * 2000); // Every 1-3 seconds
-        }
+function createThoughtBubble() {
+  const bubble = document.createElement('div');
+  bubble.className = 'thought-bubble';
 
-        // Start generating bubbles
-        startBubbleGeneration();
-        
-        // Create initial bubbles
-        for (let i = 0; i < 3; i++) {
-            setTimeout(() => createThoughtBubble(), i * 500);
-        }
+  const selectedBubble = svgBubbles[Math.floor(Math.random() * svgBubbles.length)];
+  const svgContainer = document.createElement('div');
+  svgContainer.innerHTML = selectedBubble.svg;
+  svgContainer.className = 'svg-bubble';
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            // Remove bubbles that are now off-screen
-            const bubbles = document.querySelectorAll('.thought-bubble');
-            bubbles.forEach(bubble => {
-                const rect = bubble.getBoundingClientRect();
-                if (rect.left > window.innerWidth || rect.top > window.innerHeight) {
-                    if (bubble.parentNode) {
-                        bubble.parentNode.removeChild(bubble);
-                    }
-                }
-            });
-        });
-    </script>
+  const textContent = document.createElement('div');
+  textContent.className = `bubble-content text-on-${selectedBubble.textColor === 'white' ? 'black' : 'white'}`;
+  const thought = doomThoughts[Math.floor(Math.random() * doomThoughts.length)];
+  textContent.textContent = thought;
+  textContent.style.fontFamily = `'${googleFonts[Math.floor(Math.random() * googleFonts.length)]}', serif`;
+  textContent.style.fontWeight = Math.random() < 0.4 ? 'bold' : '500';
+  textContent.style.fontStyle = Math.random() < 0.3 ? 'italic' : 'normal';
+
+  bubble.appendChild(svgContainer);
+  bubble.appendChild(textContent);
+
+  const x = Math.random() * (window.innerWidth - 320);
+  const y = Math.random() * (window.innerHeight - 200);
+  bubble.style.left = x + 'px';
+  bubble.style.top = y + 'px';
+  bubble.style.width = '320px';
+  bubble.style.height = '200px';
+
+  document.body.appendChild(bubble);
+
+  setTimeout(() => {
+    bubble.remove();
+  }, 6000);
+
+  bubble.addEventListener('click', () => {
+    bubble.style.animation = 'none';
+    bubble.style.opacity = '0';
+    bubble.style.transform = 'scale(0)';
+    setTimeout(() => bubble.remove(), 200);
+  });
+}
+
+setInterval(() => {
+  if (Math.random() < 0.7) createThoughtBubble();
+}, 1000 + Math.random() * 2000);
+
+for (let i = 0; i < 3; i++) {
+  setTimeout(createThoughtBubble, i * 500);
+}
+</script>
 </body>
 </html>
