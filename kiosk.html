@@ -39,12 +39,30 @@
       text-align: center;
       padding: 1em;
     }
+    .spinner {
+      border: 4px solid #333;
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <div id="container">
     <iframe id="frame" src="about:blank" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-    <div id="loading">Loading website...</div>
+    <div id="loading">
+      <div>
+        <div class="spinner"></div>
+        Loading website...
+      </div>
+    </div>
   </div>
 
   <script>
@@ -52,18 +70,26 @@
     const MIN_REFRESH_TIME = 15;
     const MAX_REFRESH_TIME = 120;
     const DEBUG = true;
+    const LOAD_TIMEOUT = 120000; // 2 minutes for slow loading content
+    const MAX_RETRIES = 3;
 
     let websiteList = [];
     let currentIndex = -1;
     let refreshTimer = null;
+    let loadTimer = null;
+    let retryCount = 0;
+    let currentUrl = null;
 
     function log(...args) {
       if (DEBUG) {
-        console.log(...args);
-        const loading = document.getElementById('loading');
-        if (loading) {
-          loading.innerHTML += "<br>" + args.join(' ');
-        }
+        console.log(new Date().toISOString(), ...args);
+      }
+    }
+
+    function updateLoadingText(text) {
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.innerHTML = `<div><div class="spinner"></div>${text}</div>`;
       }
     }
 
@@ -86,35 +112,128 @@
         newIndex = getSecureRandomInt(0, websiteList.length - 1);
       } while (newIndex === currentIndex && websiteList.length > 1);
       currentIndex = newIndex;
-      log(`Selected website index ${currentIndex}: ${websiteList[currentIndex].url}`);
+      log(`Selected website index ${currentIndex}: ${websiteList[currentIndex]}`);
       return websiteList[currentIndex];
     }
 
-    function loadWebsite(url) {
-      const frame = document.getElementById('frame');
+    function hideLoading() {
       const loading = document.getElementById('loading');
-      loading.style.display = 'flex';
-      loading.innerHTML = `Loading: ${url}`;
-      log(`Loading website: ${url}`);
-      frame.src = url;
-
-      frame.onload = function() {
-        log(`Website loaded successfully: ${url}`);
+      if (loading) {
         loading.style.display = 'none';
+      }
+    }
+
+    function showLoading() {
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.style.display = 'flex';
+      }
+    }
+
+    function onLoadSuccess(url) {
+      log(`Successfully loaded: ${url}`);
+      hideLoading();
+      retryCount = 0;
+      
+      // Clear any existing timers
+      if (loadTimer) {
+        clearTimeout(loadTimer);
+        loadTimer = null;
+      }
+      
+      scheduleNextRefresh();
+    }
+
+    function onLoadFailure(url, error) {
+      log(`Failed to load: ${url}`, error);
+      console.error(`404 or loading error for URL: ${url}`);
+      
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        log(`Retrying ${url} (attempt ${retryCount}/${MAX_RETRIES})`);
+        updateLoadingText(`Retrying: ${url}<br>Attempt ${retryCount}/${MAX_RETRIES}`);
+        setTimeout(() => loadWebsite(url), 3000);
+      } else {
+        log(`Max retries reached for ${url}, moving to next`);
+        console.error(`Max retries reached for ${url}, moving to next URL`);
+        retryCount = 0;
+        updateLoadingText('Loading failed. Trying next website...');
+        setTimeout(() => {
+          const website = selectRandomWebsite();
+          if (website) {
+            loadWebsite(website);
+          }
+        }, 2000);
+      }
+    }
+
+    function loadWebsite(url) {
+      currentUrl = url;
+      const frame = document.getElementById('frame');
+      
+      showLoading();
+      updateLoadingText(`Loading: ${url}<br>Please wait, some content takes time to load...`);
+      log(`Loading website: ${url}`);
+      
+      // Clear any existing timers
+      if (loadTimer) {
+        clearTimeout(loadTimer);
+      }
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+
+      // Set up load timeout - be patient for slow content
+      loadTimer = setTimeout(() => {
+        log(`Load timeout for ${url} after ${LOAD_TIMEOUT/1000} seconds`);
+        
+        // Check if iframe has any content before treating as failure
+        try {
+          const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+          if (iframeDoc && iframeDoc.readyState === 'complete') {
+            // If document is complete, consider it loaded even if slow
+            log(`Iframe document complete for ${url}, considering it loaded`);
+            onLoadSuccess(url);
+            return;
+          }
+        } catch (e) {
+          // Cross-origin iframe, can't check content - assume it's loading
+          log(`Cross-origin iframe for ${url}, assuming it's loading`);
+          onLoadSuccess(url);
+          return;
+        }
+        
+        // Truly failed to load
+        onLoadFailure(url, 'Load timeout');
+      }, LOAD_TIMEOUT);
+
+      // Set up iframe event handlers
+      frame.onload = function() {
+        log(`Iframe onload triggered for: ${url}`);
+        
+        // Additional check for actual content
+        setTimeout(() => {
+          try {
+            const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+            if (iframeDoc && iframeDoc.title && iframeDoc.title.toLowerCase().includes('404')) {
+              throw new Error('404 page detected');
+            }
+          } catch (e) {
+            // Cross-origin - assume it's good if onload fired
+            log(`Cross-origin iframe loaded: ${url}`);
+          }
+          
+          onLoadSuccess(url);
+        }, 1000); // Small delay to let content settle
       };
 
       frame.onerror = function(e) {
-        log(`Error loading website: ${url}`, e);
-        loading.innerHTML = `Error loading site. Refreshing...`;
-        setTimeout(() => {
-          window.location.reload();
-        }, 30000); // wait 30 seconds then refresh
+        log(`Iframe onerror triggered for: ${url}`, e);
+        onLoadFailure(url, 'Iframe error event');
       };
 
-      // safety fallback in case iframe fails silently
-      setTimeout(() => {
-        loading.style.display = 'none';
-      }, 10000);
+      // Start loading
+      frame.src = url;
     }
 
     function scheduleNextRefresh() {
@@ -126,14 +245,15 @@
       refreshTimer = setTimeout(() => {
         const website = selectRandomWebsite();
         if (website) {
-          loadWebsite(website.url);
+          loadWebsite(website);
         }
-        scheduleNextRefresh();
       }, refreshTime);
     }
 
     async function fetchConfig() {
       log('Fetching config from:', CONFIG_URL);
+      updateLoadingText('Loading configuration...');
+      
       try {
         const response = await fetch(CONFIG_URL, {
           mode: 'cors',
@@ -151,15 +271,14 @@
         const data = JSON.parse(text);
 
         if (data && Array.isArray(data.urls)) {
-          websiteList = data.urls.map(url => ({ url }));
-          log(`Loaded ${websiteList.length} websites`);
+          websiteList = data.urls;
+          log(`Loaded ${websiteList.length} websites:`, websiteList);
         } else {
           throw new Error('Invalid config format');
         }
       } catch (err) {
         log('Config load failed:', err);
-        const loading = document.getElementById('loading');
-        loading.innerHTML = `Failed to load config. Refreshing in 30 seconds...`;
+        updateLoadingText(`Failed to load config: ${err.message}<br>Refreshing in 30 seconds...`);
         setTimeout(() => {
           window.location.reload();
         }, 30000);
@@ -170,9 +289,8 @@
         log('Starting website rotation');
         const website = selectRandomWebsite();
         if (website) {
-          loadWebsite(website.url);
+          loadWebsite(website);
         }
-        scheduleNextRefresh();
       }
     }
 
@@ -186,6 +304,20 @@
       log('Refreshing page after 1 hour');
       window.location.reload();
     }, 3600000);
+
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        log('Page hidden, pausing timers');
+        if (refreshTimer) clearTimeout(refreshTimer);
+        if (loadTimer) clearTimeout(loadTimer);
+      } else {
+        log('Page visible, resuming');
+        if (currentUrl) {
+          scheduleNextRefresh();
+        }
+      }
+    });
   </script>
 </body>
 </html>
