@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Images</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 100%);
+        }
+
+        .animated-image {
+            position: absolute;
+            max-width: 300px;
+            max-height: 300px;
+            object-fit: contain;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.1));
+        }
+
+        .frozen-image {
+            filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.3)) brightness(0.7);
+            opacity: 0.5;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="loading" id="loading">Loading images...</div>
+    </div>
+
+    <script>
+        class AnimatedImage {
+            constructor(imageElement, containerWidth, containerHeight) {
+                this.element = imageElement;
+                this.containerWidth = containerWidth;
+                this.containerHeight = containerHeight;
+                this.isFrozen = false;
+                
+                // Position
+                this.x = Math.random() * (containerWidth - 200);
+                this.y = Math.random() * (containerHeight - 200);
+                
+                // Movement
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                
+                // Rotation
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = (Math.random() - 0.5) * 2;
+                
+                // Scale
+                this.scale = 0.3 + Math.random() * 0.7;
+                this.scaleDirection = Math.random() > 0.5 ? 1 : -1;
+                this.scaleSpeed = 0.002 + Math.random() * 0.008;
+                
+                // Animation type
+                this.animationType = Math.floor(Math.random() * 4);
+                
+                // Orbit properties (for circular motion)
+                this.orbitCenterX = containerWidth / 2;
+                this.orbitCenterY = containerHeight / 2;
+                this.orbitRadius = 100 + Math.random() * 200;
+                this.orbitAngle = Math.random() * Math.PI * 2;
+                this.orbitSpeed = 0.01 + Math.random() * 0.02;
+                
+                // Sine wave properties
+                this.sineOffset = Math.random() * Math.PI * 2;
+                this.sineAmplitude = 50 + Math.random() * 100;
+                this.sineFrequency = 0.02 + Math.random() * 0.03;
+                
+                // Spiral properties
+                this.spiralAngle = 0;
+                this.spiralRadius = 10;
+                this.spiralSpeed = 0.05 + Math.random() * 0.05;
+                this.spiralExpansion = 0.5 + Math.random() * 1;
+                
+                this.time = 0;
+                this.initialUpdate();
+            }
+            
+            initialUpdate() {
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                this.element.style.transform = `rotate(${this.rotation}deg) scale(${this.scale})`;
+            }
+            
+            freeze() {
+                this.isFrozen = true;
+                this.element.classList.add('frozen-image');
+            }
+            
+            update() {
+                if (this.isFrozen) return;
+                
+                this.time += 1;
+                
+                switch(this.animationType) {
+                    case 0: // Linear movement with bouncing
+                        this.updateLinearMovement();
+                        break;
+                    case 1: // Circular orbit
+                        this.updateOrbitMovement();
+                        break;
+                    case 2: // Sine wave movement
+                        this.updateSineMovement();
+                        break;
+                    case 3: // Spiral movement
+                        this.updateSpiralMovement();
+                        break;
+                }
+                
+                // Update rotation
+                this.rotation += this.rotationSpeed;
+                
+                // Update scale with pulsing effect
+                this.scale += this.scaleSpeed * this.scaleDirection;
+                if (this.scale > 1.2 || this.scale < 0.2) {
+                    this.scaleDirection *= -1;
+                }
+                
+                // Apply transforms
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                this.element.style.transform = `rotate(${this.rotation}deg) scale(${this.scale})`;
+            }
+            
+            updateLinearMovement() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Bounce off walls
+                if (this.x <= 0 || this.x >= this.containerWidth - 200) {
+                    this.vx *= -1;
+                }
+                if (this.y <= 0 || this.y >= this.containerHeight - 200) {
+                    this.vy *= -1;
+                }
+            }
+            
+            updateOrbitMovement() {
+                this.orbitAngle += this.orbitSpeed;
+                this.x = this.orbitCenterX + Math.cos(this.orbitAngle) * this.orbitRadius - 100;
+                this.y = this.orbitCenterY + Math.sin(this.orbitAngle) * this.orbitRadius - 100;
+                
+                // Vary orbit radius slightly
+                this.orbitRadius += Math.sin(this.time * 0.01) * 0.5;
+            }
+            
+            updateSineMovement() {
+                this.x += this.vx;
+                this.y = this.orbitCenterY + Math.sin(this.time * this.sineFrequency + this.sineOffset) * this.sineAmplitude - 100;
+                
+                // Wrap around screen horizontally
+                if (this.x > this.containerWidth) {
+                    this.x = -200;
+                }
+                if (this.x < -200) {
+                    this.x = this.containerWidth;
+                }
+            }
+            
+            updateSpiralMovement() {
+                this.spiralAngle += this.spiralSpeed;
+                this.spiralRadius += this.spiralExpansion;
+                
+                this.x = this.orbitCenterX + Math.cos(this.spiralAngle) * this.spiralRadius - 100;
+                this.y = this.orbitCenterY + Math.sin(this.spiralAngle) * this.spiralRadius - 100;
+                
+                // Reset spiral when it gets too big
+                if (this.spiralRadius > 300) {
+                    this.spiralRadius = 10;
+                    this.spiralAngle = 0;
+                }
+            }
+        }
+
+        let animatedImages = [];
+        let frozenImages = [];
+        let animationId;
+        let imagesLoaded = 0;
+        const totalImages = 144;
+        
+        function getRandomImageNumber() {
+            return Math.floor(Math.random() * totalImages) + 1;
+        }
+        
+        function createImageElement(imageNumber) {
+            const img = document.createElement('img');
+            img.src = `images/${imageNumber}.png`;
+            img.className = 'animated-image';
+            img.style.position = 'absolute';
+            
+            return new Promise((resolve, reject) => {
+                img.onload = () => {
+                    imagesLoaded++;
+                    resolve(img);
+                };
+                img.onerror = () => {
+                    console.error(`Failed to load image ${imageNumber}.png`);
+                    reject(new Error(`Failed to load image ${imageNumber}.png`));
+                };
+            });
+        }
+        
+        async function addNewImage() {
+            try {
+                const imageNumber = getRandomImageNumber();
+                const imgElement = await createImageElement(imageNumber);
+                const container = document.getElementById('container');
+                
+                container.appendChild(imgElement);
+                
+                const animatedImg = new AnimatedImage(
+                    imgElement,
+                    window.innerWidth,
+                    window.innerHeight
+                );
+                
+                animatedImages.push(animatedImg);
+                
+                // Add some visual flair when image appears
+                imgElement.style.opacity = '0';
+                imgElement.style.transform = 'scale(0) rotate(0deg)';
+                
+                setTimeout(() => {
+                    imgElement.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    imgElement.style.opacity = '0.8';
+                    imgElement.style.transform = `scale(${animatedImg.scale}) rotate(${animatedImg.rotation}deg)`;
+                    
+                    setTimeout(() => {
+                        imgElement.style.transition = '';
+                    }, 500);
+                }, 50);
+                
+            } catch (error) {
+                console.error('Error adding image:', error);
+            }
+        }
+        
+        function freezeCurrentImages() {
+            // Freeze all currently animated images
+            animatedImages.forEach(img => {
+                img.freeze();
+                frozenImages.push(img);
+            });
+            
+            // Clear the animated images array
+            animatedImages = [];
+        }
+        
+        function clearOldFrozenImages() {
+            // Remove some old frozen images if we have too many
+            if (frozenImages.length > 12) {
+                const toRemove = frozenImages.splice(0, frozenImages.length - 8);
+                toRemove.forEach(img => {
+                    img.element.style.transition = 'opacity 1s ease';
+                    img.element.style.opacity = '0';
+                    setTimeout(() => {
+                        img.element.remove();
+                    }, 1000);
+                });
+            }
+        }
+        
+        async function startNewAnimationCycle() {
+            // Freeze current images
+            freezeCurrentImages();
+            
+            // Clean up old frozen images
+            clearOldFrozenImages();
+            
+            // Wait a moment for the freeze effect
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Add new animated images (random number between 2 and 6)
+            const newImageCount = Math.floor(Math.random() * 5) + 2; // 2-6 images
+            
+            for (let i = 0; i < newImageCount; i++) {
+                await addNewImage();
+                // Small delay between adding images for visual effect
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Schedule the next cycle (random time between 8-15 seconds)
+            const nextCycleTime = (Math.random() * 7 + 8) * 1000;
+            setTimeout(startNewAnimationCycle, nextCycleTime);
+        }
+        
+        function animate() {
+            animatedImages.forEach(img => {
+                img.update();
+            });
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function handleResize() {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            
+            animatedImages.forEach(img => {
+                img.containerWidth = newWidth;
+                img.containerHeight = newHeight;
+                img.orbitCenterX = newWidth / 2;
+                img.orbitCenterY = newHeight / 2;
+            });
+        }
+        
+        async function init() {
+            // Start with initial images
+            const initialImageCount = Math.floor(Math.random() * 3) + 3; // 3-5 images
+            
+            for (let i = 0; i < initialImageCount; i++) {
+                await addNewImage();
+                // Small delay between adding images for visual effect
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            // Hide loading message
+            document.getElementById('loading').style.display = 'none';
+            
+            // Start animation
+            animate();
+            
+            // Start the cycle of freezing and adding new images
+            // First cycle happens after 10-20 seconds
+            const firstCycleTime = (Math.random() * 10 + 10) * 1000;
+            setTimeout(startNewAnimationCycle, firstCycleTime);
+        }
+        
+        // Event listeners
+        window.addEventListener('resize', handleResize);
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
