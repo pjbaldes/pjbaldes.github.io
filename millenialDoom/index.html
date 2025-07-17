@@ -15,7 +15,6 @@
     }
 
     body {
-      background: white;
       min-height: 100vh;
       overflow: hidden;
       position: relative;
@@ -23,10 +22,8 @@
 
     .thought-bubble {
       position: absolute;
-      max-width: 420px;
       cursor: pointer;
       transition: all 0.3s ease;
-      animation: fadeInFloat 6s ease-in-out;
       z-index: 1;
     }
 
@@ -40,7 +37,6 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 22px;
       line-height: 1.4;
       text-align: center;
       padding: 21px;
@@ -51,15 +47,15 @@
 
     .bubble-content.text-on-white {
       color: #111;
-      text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+      text-shadow: 0 2px 4px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.7);
     }
 
     .bubble-content.text-on-black {
       color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6);
     }
 
-    @keyframes fadeInFloat {
+    @keyframes fadeInFloatUp {
       0% {
         opacity: 0;
         transform: translateY(80px) scale(0.7);
@@ -70,11 +66,144 @@
       }
       75% {
         opacity: 1;
-        transform: translateY(-30px) scale(1.05);
+        transform: translateY(-80px) scale(1.05);
       }
       100% {
         opacity: 0;
-        transform: translateY(-70px) scale(0.9);
+        transform: translateY(-150px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeInFloatDown {
+      0% {
+        opacity: 0;
+        transform: translateY(-80px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translateY(80px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(150px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeInFloatLeft {
+      0% {
+        opacity: 0;
+        transform: translateX(80px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translateX(0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translateX(-80px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(-150px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeInFloatRight {
+      0% {
+        opacity: 0;
+        transform: translateX(-80px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translateX(0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translateX(80px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(150px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeInFloatUpLeft {
+      0% {
+        opacity: 0;
+        transform: translate(60px, 60px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translate(0px, 0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translate(-60px, -60px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-120px, -120px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeInFloatUpRight {
+      0% {
+        opacity: 0;
+        transform: translate(-60px, 60px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translate(0px, 0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translate(60px, -60px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(120px, -120px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeInFloatDownLeft {
+      0% {
+        opacity: 0;
+        transform: translate(60px, -60px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translate(0px, 0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translate(-60px, 60px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-120px, 120px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeInFloatDownRight {
+      0% {
+        opacity: 0;
+        transform: translate(-60px, -60px) scale(0.7);
+      }
+      15% {
+        opacity: 1;
+        transform: translate(0px, 0px) scale(1);
+      }
+      75% {
+        opacity: 1;
+        transform: translate(60px, 60px) scale(1.05);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(120px, 120px) scale(0.9);
       }
     }
 
@@ -147,13 +276,25 @@ const googleFonts = [
   'Libre Baskerville', 'Montserrat'
 ];
 
+// Set random background color
+const isBackgroundBlack = Math.random() < 0.5;
+document.body.style.background = isBackgroundBlack ? '#000' : '#fff';
+
 const svgBubbles = [
   {
-    svg: `<svg viewBox="0 0 300 200"><ellipse cx="150" cy="100" rx="140" ry="80" fill="white" stroke="#333" stroke-width="2"/><circle cx="80" cy="170" r="15" fill="white" stroke="#333" stroke-width="2"/><circle cx="50" cy="185" r="8" fill="white" stroke="#333" stroke-width="2"/></svg>`,
+    svg: `<svg viewBox="0 0 300 200"><ellipse cx="150" cy="100" rx="140" ry="80" fill="white" stroke="#333" stroke-width="3"/><circle cx="80" cy="170" r="15" fill="white" stroke="#333" stroke-width="3"/><circle cx="50" cy="185" r="8" fill="white" stroke="#333" stroke-width="3"/></svg>`,
     textColor: 'black'
   },
   {
-    svg: `<svg viewBox="0 0 280 160"><ellipse cx="140" cy="80" rx="130" ry="70" fill="black" stroke="white" stroke-width="2"/><ellipse cx="60" cy="140" rx="12" ry="8" fill="black" stroke="white" stroke-width="2"/><ellipse cx="35" cy="150" rx="6" ry="4" fill="black" stroke="white" stroke-width="2"/></svg>`,
+    svg: `<svg viewBox="0 0 280 160"><ellipse cx="140" cy="80" rx="130" ry="70" fill="#222" stroke="#ddd" stroke-width="3"/><ellipse cx="60" cy="140" rx="12" ry="8" fill="#222" stroke="#ddd" stroke-width="3"/><ellipse cx="35" cy="150" rx="6" ry="4" fill="#222" stroke="#ddd" stroke-width="3"/></svg>`,
+    textColor: 'white'
+  },
+  {
+    svg: `<svg viewBox="0 0 290 180"><ellipse cx="145" cy="90" rx="135" ry="75" fill="#f8f8f8" stroke="#111" stroke-width="3"/><circle cx="75" cy="155" r="13" fill="#f8f8f8" stroke="#111" stroke-width="3"/><circle cx="48" cy="168" r="7" fill="#f8f8f8" stroke="#111" stroke-width="3"/></svg>`,
+    textColor: 'black'
+  },
+  {
+    svg: `<svg viewBox="0 0 285 175"><ellipse cx="142" cy="87" rx="132" ry="72" fill="#111" stroke="#eee" stroke-width="3"/><ellipse cx="72" cy="150" rx="11" ry="7" fill="#111" stroke="#eee" stroke-width="3"/><ellipse cx="46" cy="162" rx="5" ry="3" fill="#111" stroke="#eee" stroke-width="3"/></svg>`,
     textColor: 'white'
   }
 ];
@@ -162,34 +303,62 @@ function createThoughtBubble() {
   const bubble = document.createElement('div');
   bubble.className = 'thought-bubble';
 
+  // Generate random scale factor (1.0 to 3.0 for up to 200% larger)
+  const scaleFactor = 1 + Math.random() * 2; // 1.0 to 3.0
+  
+  // Random animation direction
+  const animations = [
+    'fadeInFloatUp', 'fadeInFloatDown', 'fadeInFloatLeft', 'fadeInFloatRight',
+    'fadeInFloatUpLeft', 'fadeInFloatUpRight', 'fadeInFloatDownLeft', 'fadeInFloatDownRight'
+  ];
+  const selectedAnimation = animations[Math.floor(Math.random() * animations.length)];
+  const animationDuration = 10 + Math.random() * 5; // 10-15 seconds for slower movement
+  
+  bubble.style.animation = `${selectedAnimation} ${animationDuration}s ease-in-out`;
+  
   const selectedBubble = svgBubbles[Math.floor(Math.random() * svgBubbles.length)];
   const svgContainer = document.createElement('div');
   svgContainer.innerHTML = selectedBubble.svg;
   svgContainer.className = 'svg-bubble';
 
   const textContent = document.createElement('div');
-  textContent.className = `bubble-content text-on-${selectedBubble.textColor === 'white' ? 'black' : 'white'}`;
+  textContent.className = `bubble-content text-on-${selectedBubble.textColor === 'black' ? 'white' : 'black'}`;
   const thought = doomThoughts[Math.floor(Math.random() * doomThoughts.length)];
   textContent.textContent = thought;
   textContent.style.fontFamily = `'${googleFonts[Math.floor(Math.random() * googleFonts.length)]}', serif`;
   textContent.style.fontWeight = Math.random() < 0.4 ? 'bold' : '500';
   textContent.style.fontStyle = Math.random() < 0.3 ? 'italic' : 'normal';
+  
+  // Scale the font size based on the scale factor
+  const baseFontSize = 22;
+  textContent.style.fontSize = (baseFontSize * scaleFactor) + 'px';
 
   bubble.appendChild(svgContainer);
   bubble.appendChild(textContent);
 
-  const x = Math.random() * (window.innerWidth - 320);
-  const y = Math.random() * (window.innerHeight - 200);
+  // Scale the bubble dimensions
+  const baseWidth = 320;
+  const baseHeight = 200;
+  const scaledWidth = baseWidth * scaleFactor;
+  const scaledHeight = baseHeight * scaleFactor;
+
+  // Adjust positioning to account for larger sizes and animation direction
+  const padding = 200; // Extra padding to account for animation movement
+  const maxX = Math.max(0, window.innerWidth - scaledWidth + padding);
+  const maxY = Math.max(0, window.innerHeight - scaledHeight + padding);
+  const x = Math.random() * maxX - padding/2;
+  const y = Math.random() * maxY - padding/2;
+  
   bubble.style.left = x + 'px';
   bubble.style.top = y + 'px';
-  bubble.style.width = '320px';
-  bubble.style.height = '200px';
+  bubble.style.width = scaledWidth + 'px';
+  bubble.style.height = scaledHeight + 'px';
 
   document.body.appendChild(bubble);
 
   setTimeout(() => {
     bubble.remove();
-  }, 6000);
+  }, animationDuration * 1000);
 
   bubble.addEventListener('click', () => {
     bubble.style.animation = 'none';
@@ -200,8 +369,8 @@ function createThoughtBubble() {
 }
 
 setInterval(() => {
-  if (Math.random() < 0.7) createThoughtBubble();
-}, 1000 + Math.random() * 2000);
+  if (Math.random() < 0.6) createThoughtBubble();
+}, 2000 + Math.random() * 3000);
 
 for (let i = 0; i < 3; i++) {
   setTimeout(createThoughtBubble, i * 500);
