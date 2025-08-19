@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+</head>
+<body style="margin: 0; padding: 0;">
+    <script>
+        let sz = 100;
+        let triangles = [];
+        let cols, rows;
+        let colorShades = [];
+        let bgColor;
+        let lastRotationTime = 0;
+        let rotationInterval = 1000; // 1 second
+        let animatingTriangle = null;
+        let animationStartTime = 0;
+        let animationDuration = 1000; // 1 second animation
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            
+            // Pick random base RGB color
+            let baseR = random(0, 255);
+            let baseG = random(0, 255);
+            let baseB = random(0, 255);
+            
+            // Create 4 shades of the base color (lightest to darkest)
+            colorShades = [
+                color(
+                    Math.min(255, baseR + 60),
+                    Math.min(255, baseG + 60), 
+                    Math.min(255, baseB + 60)
+                ), // Lightest
+                color(baseR, baseG, baseB), // Base color
+                color(
+                    Math.max(0, baseR - 40),
+                    Math.max(0, baseG - 40),
+                    Math.max(0, baseB - 40)
+                ), // Darker
+                color(
+                    Math.max(0, baseR - 80),
+                    Math.max(0, baseG - 80),
+                    Math.max(0, baseB - 80)
+                )  // Darkest
+            ];
+            
+            // Pick random background color
+            bgColor = color(random(0, 255), random(0, 255), random(0, 255));
+            
+            // Calculate grid dimensions (include bleeding off edges)
+            cols = Math.ceil(windowWidth / sz) + 1;
+            rows = Math.ceil(windowHeight / sz) + 1;
+            
+            // Create triangle objects - 2 triangles per grid position
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    let x = col * sz;
+                    let y = row * sz;
+                    
+                    // Create first triangle at this position
+                    let triangle1 = {
+                        x: x,
+                        y: y,
+                        currentRotation: random([0, 90, 180, 270]),
+                        targetRotation: 0,
+                        color: random(colorShades),
+                        isAnimating: false
+                    };
+                    triangle1.targetRotation = triangle1.currentRotation;
+                    triangles.push(triangle1);
+                    
+                    // Create second triangle at this position
+                    let triangle2 = {
+                        x: x,
+                        y: y,
+                        currentRotation: random([0, 90, 180, 270]),
+                        targetRotation: 0,
+                        color: random(colorShades),
+                        isAnimating: false
+                    };
+                    triangle2.targetRotation = triangle2.currentRotation;
+                    triangles.push(triangle2);
+                }
+            }
+            
+            lastRotationTime = millis();
+        }
+
+        function draw() {
+            background(bgColor);
+            
+            // Check if it's time to rotate a new triangle (only if no triangle is currently animating)
+            if (animatingTriangle === null && millis() - lastRotationTime > rotationInterval) {
+                startNewRotation();
+                lastRotationTime = millis();
+            }
+            
+            // Update and draw triangles
+            for (let triangle of triangles) {
+                drawTriangle(triangle);
+            }
+        }
+
+        function startNewRotation() {
+            // Pick a random triangle
+            let randomTriangle = random(triangles);
+            
+            // Randomly choose rotation direction (90 or -90 degrees)
+            let rotationDirection = random([-90, 90]);
+            
+            // Set up animation
+            randomTriangle.targetRotation += rotationDirection;
+            randomTriangle.isAnimating = true;
+            animatingTriangle = randomTriangle;
+            animationStartTime = millis();
+        }
+
+        function drawTriangle(triangle) {
+            push();
+            
+            // Calculate current rotation for animation
+            let currentRotation = triangle.currentRotation;
+            if (triangle.isAnimating) {
+                let elapsed = millis() - animationStartTime;
+                let progress = Math.min(elapsed / animationDuration, 1.0);
+                
+                // Smooth easing
+                progress = easeInOutCubic(progress);
+                
+                currentRotation = lerp(triangle.currentRotation, triangle.targetRotation, progress);
+                
+                // Check if animation is complete
+                if (progress >= 1.0) {
+                    triangle.currentRotation = triangle.targetRotation;
+                    triangle.isAnimating = false;
+                    animatingTriangle = null;
+                }
+            }
+            
+            // Set up transformation matrix - rotate around the x,y point (top vertex)
+            translate(triangle.x, triangle.y);
+            rotate(radians(currentRotation));
+            
+            // Set fill color with no stroke
+            fill(triangle.color);
+            noStroke();
+            
+            // Draw triangle with (x,y) as the top vertex
+            beginShape();
+            vertex(0, 0);              // Top point (x,y)
+            vertex(sz/2, sz/2);        // Bottom right (x+sz/2, y+sz/2)
+            vertex(-sz/2, sz/2);       // Bottom left (x-sz/2, y+sz/2)
+            endShape(CLOSE);
+            
+            pop();
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            
+            // Recalculate grid and recreate triangles (include bleeding off edges)
+            cols = Math.ceil(windowWidth / sz) + 1;
+            rows = Math.ceil(windowHeight / sz) + 1;
+            
+            triangles = [];
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    let x = col * sz;
+                    let y = row * sz;
+                    
+                    // Create first triangle at this position
+                    let triangle1 = {
+                        x: x,
+                        y: y,
+                        currentRotation: random([0, 90, 180, 270]),
+                        targetRotation: 0,
+                        color: random(colorShades),
+                        isAnimating: false
+                    };
+                    triangle1.targetRotation = triangle1.currentRotation;
+                    triangles.push(triangle1);
+                    
+                    // Create second triangle at this position
+                    let triangle2 = {
+                        x: x,
+                        y: y,
+                        currentRotation: random([0, 90, 180, 270]),
+                        targetRotation: 0,
+                        color: random(colorShades),
+                        isAnimating: false
+                    };
+                    triangle2.targetRotation = triangle2.currentRotation;
+                    triangles.push(triangle2);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
