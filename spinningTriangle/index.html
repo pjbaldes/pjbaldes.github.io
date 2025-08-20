@@ -2,10 +2,17 @@
 <html>
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Remove scroll bars */
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0;">
+<body>
     <script>
-        let sz = 100;
+        let sz;
         let triangles = [];
         let cols, rows;
         let colorShades = [];
@@ -15,9 +22,19 @@
         let animatingTriangle = null;
         let animationStartTime = 0;
         let animationDuration = 1000; // 1 second animation
+        let refreshTime;
 
         function setup() {
             createCanvas(windowWidth, windowHeight);
+            
+            // Random grid size between 100 and 300
+            sz = random(100, 300);
+            
+            // Set random refresh time between 30-90 seconds
+            refreshTime = random(30000, 90000); // Convert to milliseconds
+            setTimeout(() => {
+                location.reload();
+            }, refreshTime);
             
             // Pick random base RGB color
             let baseR = random(0, 255);
@@ -51,35 +68,25 @@
             cols = Math.ceil(windowWidth / sz) + 1;
             rows = Math.ceil(windowHeight / sz) + 1;
             
-            // Create triangle objects - 2 triangles per grid position
+            // Create triangle objects - 3 triangles per grid position
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     let x = col * sz;
                     let y = row * sz;
                     
-                    // Create first triangle at this position
-                    let triangle1 = {
-                        x: x,
-                        y: y,
-                        currentRotation: random([0, 90, 180, 270]),
-                        targetRotation: 0,
-                        color: random(colorShades),
-                        isAnimating: false
-                    };
-                    triangle1.targetRotation = triangle1.currentRotation;
-                    triangles.push(triangle1);
-                    
-                    // Create second triangle at this position
-                    let triangle2 = {
-                        x: x,
-                        y: y,
-                        currentRotation: random([0, 90, 180, 270]),
-                        targetRotation: 0,
-                        color: random(colorShades),
-                        isAnimating: false
-                    };
-                    triangle2.targetRotation = triangle2.currentRotation;
-                    triangles.push(triangle2);
+                    // Create three triangles at this position
+                    for (let i = 0; i < 3; i++) {
+                        let triangle = {
+                            x: x,
+                            y: y,
+                            currentRotation: random([0, 90, 180, 270]),
+                            targetRotation: 0,
+                            color: random(colorShades),
+                            isAnimating: false
+                        };
+                        triangle.targetRotation = triangle.currentRotation;
+                        triangles.push(triangle);
+                    }
                 }
             }
             
@@ -101,18 +108,80 @@
             }
         }
 
+        function getTopTrianglesOnly() {
+            // Group triangles by position
+            let positionGroups = {};
+            
+            for (let i = 0; i < triangles.length; i++) {
+                let triangle = triangles[i];
+                let posKey = `${triangle.x},${triangle.y}`;
+                
+                if (!positionGroups[posKey]) {
+                    positionGroups[posKey] = [];
+                }
+                positionGroups[posKey].push({triangle: triangle, index: i});
+            }
+            
+            // Get the topmost (last) triangle from each position
+            let topTriangles = [];
+            for (let posKey in positionGroups) {
+                let group = positionGroups[posKey];
+                // The last triangle in the group is the topmost (drawn last)
+                let topTriangle = group[group.length - 1];
+                topTriangles.push(topTriangle);
+            }
+            
+            return topTriangles;
+        }
+
+        function moveTriangleToTop(triangleIndex) {
+            // Find all triangles at the same position
+            let targetTriangle = triangles[triangleIndex];
+            let samePositionIndices = [];
+            
+            for (let i = 0; i < triangles.length; i++) {
+                if (triangles[i].x === targetTriangle.x && triangles[i].y === targetTriangle.y) {
+                    samePositionIndices.push(i);
+                }
+            }
+            
+            // Remove the target triangle and add it back at the end of its position group
+            let removedTriangle = triangles.splice(triangleIndex, 1)[0];
+            
+            // Find where to insert it (after the last triangle of the same position)
+            let maxIndex = Math.max(...samePositionIndices.filter(i => i !== triangleIndex));
+            if (maxIndex >= triangleIndex) {
+                maxIndex--; // Adjust for the removed element
+            }
+            
+            triangles.splice(maxIndex + 1, 0, removedTriangle);
+            
+            // Update the animatingTriangle reference
+            animatingTriangle = removedTriangle;
+        }
+
         function startNewRotation() {
-            // Pick a random triangle
-            let randomTriangle = random(triangles);
+            // Get only the topmost triangles (visible ones)
+            let topTriangles = getTopTrianglesOnly();
+            
+            if (topTriangles.length === 0) return;
+            
+            // Pick a random triangle from the visible ones
+            let randomTopTriangle = random(topTriangles);
+            let triangleIndex = randomTopTriangle.index;
+            let selectedTriangle = randomTopTriangle.triangle;
             
             // Randomly choose rotation direction (90 or -90 degrees)
             let rotationDirection = random([-90, 90]);
             
             // Set up animation
-            randomTriangle.targetRotation += rotationDirection;
-            randomTriangle.isAnimating = true;
-            animatingTriangle = randomTriangle;
+            selectedTriangle.targetRotation += rotationDirection;
+            selectedTriangle.isAnimating = true;
+            animatingTriangle = selectedTriangle;
             animationStartTime = millis();
+            
+            // Move this triangle to the top of its position group
+            moveTriangleToTop(triangleIndex);
         }
 
         function drawTriangle(triangle) {
@@ -172,29 +241,19 @@
                     let x = col * sz;
                     let y = row * sz;
                     
-                    // Create first triangle at this position
-                    let triangle1 = {
-                        x: x,
-                        y: y,
-                        currentRotation: random([0, 90, 180, 270]),
-                        targetRotation: 0,
-                        color: random(colorShades),
-                        isAnimating: false
-                    };
-                    triangle1.targetRotation = triangle1.currentRotation;
-                    triangles.push(triangle1);
-                    
-                    // Create second triangle at this position
-                    let triangle2 = {
-                        x: x,
-                        y: y,
-                        currentRotation: random([0, 90, 180, 270]),
-                        targetRotation: 0,
-                        color: random(colorShades),
-                        isAnimating: false
-                    };
-                    triangle2.targetRotation = triangle2.currentRotation;
-                    triangles.push(triangle2);
+                    // Create three triangles at this position
+                    for (let i = 0; i < 3; i++) {
+                        let triangle = {
+                            x: x,
+                            y: y,
+                            currentRotation: random([0, 90, 180, 270]),
+                            targetRotation: 0,
+                            color: random(colorShades),
+                            isAnimating: false
+                        };
+                        triangle.targetRotation = triangle.currentRotation;
+                        triangles.push(triangle);
+                    }
                 }
             }
         }
